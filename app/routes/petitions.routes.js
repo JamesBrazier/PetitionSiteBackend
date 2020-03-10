@@ -11,5 +11,5 @@ module.exports = function(app)
                            .patch(controller.update)
                            .delete(controller.delete);
 
-    app.route(url + "/categories").get(contorller.categories);
+    app.route(url + "/categories").get(controller.categories);
 }
