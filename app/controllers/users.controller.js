@@ -1,4 +1,5 @@
 const users = require("../models/users.model");
+const hash = require("object-hash");
 
 exports.add = async function(data) 
 {

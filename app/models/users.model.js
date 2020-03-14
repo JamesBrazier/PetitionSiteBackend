@@ -1,5 +1,4 @@
 const db = require("../../config/db");
-const hash = require("object-hash");
 
 /**
  * @description returns the user with the given id
@@ -59,8 +58,6 @@ exports.getFields = async function(id, fields)
  */
 exports.add = async function(values) 
 {
-    values.password = hash.sha1(values.password); //hash the password
-
     const connection = await db.getPool().getConnection();
 
     let [value, _] = await connection.query(

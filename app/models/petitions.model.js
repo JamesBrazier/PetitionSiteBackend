@@ -10,7 +10,17 @@ exports.get = async function(id)
     const connection = await db.getPool().getConnection();
 
     let [[value], _] = await connection.query(
-        "SELECT * FROM Petition WHERE petition_id = ?", 
+        "SELECT Petition.petition_id, title, description, User.name AS author, Category.name AS category, \
+            created_date, closing_date, Petition.photo_filename, COUNT(signatory_id) AS signatures \
+        FROM Petition \
+            JOIN User \
+            ON Petition.author_id = User.user_id \
+            JOIN Category \
+            ON Petition.category_id = Category.category_id \
+            LEFT JOIN Signature \
+            ON Petition.petition_id = Signature.petition_id \
+        WHERE Petition.petition_id = 4 \
+        GROUP BY Petition.petition_id", 
         id
     );
 
@@ -25,33 +35,102 @@ exports.getAll = async function()
 {
     const connection = await db.getPool().getConnection();
 
-    let [values, _] = await connection.query("SELECT * FROM Petition");
+    let [values, _] = await connection.query(
+        "SELECT Petition.petition_id, title, description, User.name AS author, Category.name AS category, \
+            created_date, closing_date, Petition.photo_filename, COUNT(signatory_id) AS signatures \
+        FROM Petition \
+            JOIN User \
+            ON Petition.author_id = User.user_id \
+            JOIN Category \
+            ON Petition.category_id = Category.category_id \
+            LEFT JOIN Signature \
+            ON Petition.petition_id = Signature.petition_id \
+        GROUP BY Petition.petition_id"
+    );
 
     return values;
 }
 
 /**
- * @description returns the given fields from the given petition
- * @deprecated this currently does not work
- */
-exports.getFields = async function(id, fields) 
-{
-    const connection = await db.getPool().getConnection();
-
-    let [value, _] = await connection.query(
-        "SELECT ? FROM Petition WHERE petition_id = ?",
-        [fields, id]
-    );
-
-    return value;
-}
-
-/**
- * @deprecated this is not implemented
+ * @description searches the petitions in the databse and returns those which fit the search params
+ * @param {object} params the query parameters with the given possible fields
+ * @param {Number} params.start_index the number of items to skip before returning results
+ * @param {Number} params.count the number of items to include in result
+ * @param {String} params.query include only items that include this in their title
+ * @param {Number} params.category_id include only items that have this category
+ * @param {Number} params.author_id include only items authored by the given user id
+ * @param {String} params.sort_by sort returned items in the given way 
+ * (values are: ALPHABETICAL_ASC, ALPHABETICAL_DESC, SIGNATURES_ASC, SIGNATURES_DESC)
+ * @returns the items that match the given parameters
  */
 exports.search = async function(params)
 {
-    throw new Error("Not implemented yet");
+    let queryStr = "SELECT Petition.petition_id, title, description, User.name AS author, Category.name AS category, \
+                        created_date, closing_date, Petition.photo_filename, COUNT(signatory_id) AS signatures \
+                    FROM Petition \
+                        JOIN User \
+                        ON Petition.author_id = User.user_id \
+                        JOIN Category \
+                        ON Petition.category_id = Category.category_id \
+                        LEFT JOIN Signature \
+                        ON Petition.petition_id = Signature.petition_id";
+    let queryArgs = [];
+
+    queryStr += " WHERE"
+    if (params.query !== undefined) {
+        queryStr += " title LIKE ?";
+        queryArgs.push('%' + params.query + '%');
+    } else {
+        queryStr += " true";
+    }
+
+    queryStr += " AND"
+    if (params.category_id !== undefined) {
+        queryStr += " Category.category_id = ?";
+        queryArgs.push(params.category_id);
+    } else {
+        queryStr += " true";
+    }
+
+    queryStr += " AND"
+    if (params.author_id !== undefined) {
+        queryStr += " author_id = ?";
+        queryArgs.push(params.author_id);
+    } else {
+        queryStr += " true";
+    }
+
+    queryStr += " GROUP BY Petition.petition_id";
+    switch (params.sort_by) {
+        case "SIGNATURES_ASC":
+            queryStr += " ORDER BY signatures ASC";
+            break;
+        case "ALPHABETICAL_ASC":
+            queryStr += " ORDER BY title ASC";
+            break;
+        case "ALPHABETICAL_DESC":
+            queryStr += " ORDER BY title DESC";
+            break;
+        default:
+            queryStr += " ORDER BY signatures DESC";
+            break;
+    }
+
+    if (params.count !== undefined) {
+        if (params.start_index !== undefined) {
+            queryStr += " LIMIT ?, ?"
+            queryArgs.push(params.start_index, params.count);
+        } else {
+            queryStr += " LIMIT ?";
+            queryArgs.push(params.count);
+        }
+    }
+
+    const connection = await db.getPool().getConnection();
+
+    let [values, _] = await connection.query(queryStr, queryArgs);
+
+    return values;
 }
 
 /**

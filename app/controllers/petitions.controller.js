@@ -4,6 +4,8 @@ const categories = require("../models/categories.model");
 exports.view = async function(req, res) 
 {
     try {
+        
+
 
     } catch (err) {
         res.status(500).send(`Error viewing a petition: ${err}`);
