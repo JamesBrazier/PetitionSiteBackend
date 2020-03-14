@@ -2,7 +2,7 @@ const controller = require("../controllers/petitions.controller");
 
 module.exports = function(app)
 {
-    const url = app.rootURL + "/petitions";
+    const url = app.rootUrl + "/petitions";
 
     app.route(url).get(controller.viewAll)
                   .post(controller.add);

@@ -10,16 +10,12 @@ exports.get = async function(id)
     const connection = await db.getPool().getConnection();
 
     let [[value], _] = await connection.query(
-        "SELECT Petition.petition_id, title, description, User.name AS author, Category.name AS category, \
+        "SELECT Petition.petition_id, title, description, author_id, category_id, \
             created_date, closing_date, Petition.photo_filename, COUNT(signatory_id) AS signatures \
         FROM Petition \
-            JOIN User \
-            ON Petition.author_id = User.user_id \
-            JOIN Category \
-            ON Petition.category_id = Category.category_id \
             LEFT JOIN Signature \
             ON Petition.petition_id = Signature.petition_id \
-        WHERE Petition.petition_id = 4 \
+        WHERE Petition.petition_id = ? \
         GROUP BY Petition.petition_id", 
         id
     );
@@ -36,13 +32,9 @@ exports.getAll = async function()
     const connection = await db.getPool().getConnection();
 
     let [values, _] = await connection.query(
-        "SELECT Petition.petition_id, title, description, User.name AS author, Category.name AS category, \
+        "SELECT Petition.petition_id, title, description, author_id, category_id, \
             created_date, closing_date, Petition.photo_filename, COUNT(signatory_id) AS signatures \
         FROM Petition \
-            JOIN User \
-            ON Petition.author_id = User.user_id \
-            JOIN Category \
-            ON Petition.category_id = Category.category_id \
             LEFT JOIN Signature \
             ON Petition.petition_id = Signature.petition_id \
         GROUP BY Petition.petition_id"
@@ -65,13 +57,9 @@ exports.getAll = async function()
  */
 exports.search = async function(params)
 {
-    let queryStr = "SELECT Petition.petition_id, title, description, User.name AS author, Category.name AS category, \
+    let queryStr = "SELECT Petition.petition_id, title, description, author_id, category_id, \
                         created_date, closing_date, Petition.photo_filename, COUNT(signatory_id) AS signatures \
                     FROM Petition \
-                        JOIN User \
-                        ON Petition.author_id = User.user_id \
-                        JOIN Category \
-                        ON Petition.category_id = Category.category_id \
                         LEFT JOIN Signature \
                         ON Petition.petition_id = Signature.petition_id";
     let queryArgs = [];
@@ -86,7 +74,7 @@ exports.search = async function(params)
 
     queryStr += " AND"
     if (params.category_id !== undefined) {
-        queryStr += " Category.category_id = ?";
+        queryStr += " category_id = ?";
         queryArgs.push(params.category_id);
     } else {
         queryStr += " true";

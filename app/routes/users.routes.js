@@ -2,7 +2,7 @@ const controller = require("../controllers/users.controller");
 
 module.exports = function(app)
 {
-    const url = app.rootURL + "/users";
+    const url = app.rootUrl + "/users";
 
     app.route(url + "/register").post(controller.add);
 
