@@ -1,16 +1,24 @@
 const db = require("../../config/db");
+const helper = require("./query.model");
+
+const nameMap = {
+    "photoFilename": "photo_filename",
+    "authToken": "auth_token"
+}
 
 /**
  * @description returns the user with the given id
  * @param {Number} id the user id
  * @returns the user details
  */
-exports.get = async function(id) 
+exports.get = async function(id, fields=["userId", "name", "city", "country", "email"]) 
 {
     const connection = await db.getPool().getConnection();
 
     let [[value], _] = await connection.query(
-        "SELECT * FROM User WHERE user_id = ?", 
+        helper.genSelect(fields, nameMap) +
+        "FROM User \
+        WHERE user_id = ?", 
         id
     );
 
@@ -21,26 +29,13 @@ exports.get = async function(id)
  * @description returns all the users in the database
  * @returns a list of all the users
  */
-exports.getAll = async function() 
-{
-    const connection = await db.getPool().getConnection();
-
-    let [value, _] = await connection.query("SELECT * FROM User");
-
-    return value;
-}
-
-/**
- * @description returns the given fields from the given user
- * @deprecated this doesn't work right now
- */
-exports.getFields = async function(id, fields) 
+exports.getAll = async function(fields=["userId", "name", "city", "country", "email"]) 
 {
     const connection = await db.getPool().getConnection();
 
     let [value, _] = await connection.query(
-        "SELECT ? FROM User WHERE user_id = ?", 
-        [fields, id]
+        helper.genSelect(fields, nameMap) + 
+        "FROM User"
     );
 
     return value;
@@ -61,7 +56,8 @@ exports.add = async function(values)
     const connection = await db.getPool().getConnection();
 
     let [value, _] = await connection.query(
-        "INSERT INTO User SET ?", 
+        "INSERT INTO User \
+        SET ?", 
         values
     );
 
@@ -84,7 +80,9 @@ exports.update = async function(id, values)
     const connection = await db.getPool().getConnection();
 
     let [value, _] = await connection.query(
-        "UPDATE User SET ? WHERE user_id = ?", 
+        "UPDATE User \
+        SET ? \
+        WHERE user_id = ?", 
         [values, id]
     );
 

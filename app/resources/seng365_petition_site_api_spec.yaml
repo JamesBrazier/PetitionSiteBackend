@@ -10,6 +10,8 @@ info:
     The API provides all of the server-side functionality necessary in order to
     implement the user stories for Assignment 2.
 servers:
+  - url: 'http://localhost:4057/api/v1'
+    description: personal test server
   - url: 'http://csse-s365.canterbury.ac.nz:4001/api/v1'
     description: reference server
 tags:

@@ -6,40 +6,41 @@ exports.view = async function(req, res)
 {
     try {
         const id = req.params.id;
-
-        console.log(`Petition request for id ${id}`);
+        console.log("Petition request view", id);
 
         const petition = await petitions.get(req.params.id);
 
-        if (petition === undefined) {
+        if (petition == null) {
+            console.error("Petition not found")
             res.status(404).send();
-        } else {
-            const user = await users.get(petition.author_id);
-
-            const response = {
-                petitionId: petition.petition_id,
-                title: petition.title,
-                category: (await categories.get(petition.category_id)).name,
-                authorName: user.name,
-                signatureCount: petition.signatures,
-                description: petition.description,
-                authorId: petition.author_id,
-                authorCity: user.city,
-                authorCountry: user.country,
-                createdDate: petition.created_date,
-                closingDate: petition.closing_date
-            };
-
-            console.log("Responded with", response);
-            res.status(200).send(response);
+            return;
         }
+
+        const user = await users.get(petition.author_id);
+
+        const response = {
+            petitionId: petition.petition_id,
+            title: petition.title,
+            category: (await categories.get(petition.category_id)).name,
+            authorName: user.name,
+            signatureCount: petition.signatures,
+            description: petition.description,
+            authorId: petition.author_id,
+            authorCity: user.city,
+            authorCountry: user.country,
+            createdDate: petition.created_date,
+            closingDate: petition.closing_date
+        };
+
+        res.status(200).send(response);
+        console.log("Responded with", response);
     } catch (err) {
         console.error(err)
         res.status(500).send();
     }
 }
 
-exports.viewAll = async function(req, res) 
+exports.search = async function(req, res) 
 {
     try {
         let query;
@@ -59,10 +60,11 @@ exports.viewAll = async function(req, res)
                 throw new Error("assertion failed");
             }
     
-            console.log("Petition request for", query);
+            console.log("Petition request search", query);
         } catch (err) {
             console.error(err)
             res.status(400).send()
+            return;
         }
 
         const matched = await petitions.search(query);
@@ -78,8 +80,8 @@ exports.viewAll = async function(req, res)
             });
         }
 
-        console.log("Responded with", response);
         res.status(200).send(response);
+        console.log("Responded with", response);
     } catch (err) {
         console.error(err)
         res.status(500).send();
@@ -89,35 +91,107 @@ exports.viewAll = async function(req, res)
 exports.add = async function(req, res) 
 {
     try {
+        let newPet;
 
+        try {
+            const data = req.body;
+            console.log("Petition request add", data);
+
+            newPet = {
+                title: data.title,
+                description: data.description,
+                category_id: data.categoryId,
+                closing_date: data.closingDate
+            }
+        } catch (err) {
+            console.error(err);
+            res.status(400).send();
+            return;
+        }
+
+        newPet = await petitions.add(newPet);
+        res.status(201).send(newPet.insertedId);
+        console.log("Responded with", newPet.insertedId);
     } catch (err) {
-        res.status(500).send(`Error adding a petition: ${err}`);
+        console.error(err);
+        res.status(500).send();
     }
 }
 
 exports.update = async function(req, res) 
 {
     try {
+        const id = req.params.id;
+        const data = req.body;
 
+        console.log(`Petition request update ${id} with`, data);
+
+        const petition = await petitions.get(id);
+
+        if (petition == null) {
+            console.error("Petition not found");
+            res.status(404).send();
+            return;
+        }
+
+        await petitions.update({
+            title: data.title,
+            description: data.description,
+            category_id: data.categoryId,
+            closing_date: closingDate
+        });
+
+        res.status(200).send();
+        console.log("Responded")
     } catch (err) {
-        res.status(500).send(`Error editing a petition: ${err}`);
+        console.error(err);
+        res.status(500).send();
     }
 }
 
 exports.delete = async function(req, res) 
 {
     try {
+        const id = req.params.id;
+        console.log(`Petition resquest view ${id}`);
 
+        const petition = await petitions.get(id);
+
+        if (petition == null) {
+            console.error("Petition not found");
+            res.status(404).send();
+            return;
+        }
+
+        await petitions.delete(id);
+
+        res.status(200).send();
+        console.log("Responded");
     } catch (err) {
-        res.status(500).send(`Error deleting a petition: ${err}`);
+        console.error(err)
+        res.status(500).send();
     }
 }
 
-exports.categories = async function(req, res) 
+exports.categories = async function(_, res) 
 {
     try {
+        console.log("Petition request view categories");
+        
+        category = await categories.getAll();
 
+        response = []
+        for (const value of category) {
+            response.push({
+                categoryId: value.category_id,
+                name: value.name
+            });
+        }
+
+        res.status(200).send(response);
+        console.log("Responded with", response);
     } catch (err) {
-        res.status(500).send(`Error viewing petition categories: ${err}`);
+        console.error(err)
+        res.status(500).send();
     }
 }
