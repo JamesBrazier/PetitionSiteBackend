@@ -23,6 +23,7 @@ exports.get = async function(id, fields=["userId", "name", "city", "country", "e
         id
     );
 
+    connection.release();
     return value;
 }
 
@@ -42,6 +43,7 @@ exports.getFromEmail = async function(email, fields=["userId", "name", "city", "
         email
     );
 
+    connection.release();
     return value;
 }
 
@@ -61,6 +63,7 @@ exports.getFromToken = async function(token, fields=["userId", "name", "city", "
         token
     );
 
+    connection.release();
     return value;
 }
 
@@ -100,6 +103,7 @@ exports.add = async function(values)
         [values]
     );
 
+    connection.release();
     return value;
 }
 
@@ -131,6 +135,7 @@ exports.update = async function(id, values)
         ]
     );
 
+    connection.release();
     return value;
 }
 
@@ -145,5 +150,6 @@ exports.clearFields = async function(id, fields)
         id
     );
 
+    connection.release();
     return value;
 }

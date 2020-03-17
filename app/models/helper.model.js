@@ -137,6 +137,7 @@ exports.query = async function(table, params=undefined, values=undefined)
         throw error.BadRequest(err.message); 
     }
 
+    connection.release();
     if (params.count != null && params.count === 1) {
         return response[0];
     } else {

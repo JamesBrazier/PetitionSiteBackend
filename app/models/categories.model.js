@@ -21,6 +21,7 @@ exports.get = async function(id, fields=["categoryId", "name"])
         id
     );
 
+    connection.release();
     return value;
 }
 
@@ -37,5 +38,6 @@ exports.getAll = async function(fields=["categoryId", "name"])
         "FROM Category"
     );
 
+    connection.release();
     return values;
 }

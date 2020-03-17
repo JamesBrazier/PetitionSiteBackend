@@ -23,6 +23,7 @@ exports.get = async function(petitionId, fields=["petitionId", "userId"])
         petitionId
     );
 
+    connection.release();
     return value;
 }
 
@@ -46,6 +47,7 @@ exports.add = async function(petitionId, userId)
         }
     );
 
+    connection.release();
     return value;
 }
 
@@ -69,5 +71,6 @@ exports.delete = async function(petitionId, userId)
         ]
     );
 
+    connection.release();
     return value;
 }

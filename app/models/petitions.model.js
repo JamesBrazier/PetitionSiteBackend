@@ -30,6 +30,7 @@ exports.get = async function(id, fields=["petitionId", "title", "categoryId", "a
         id
     );
 
+    connection.release();
     return value;
 }
 
@@ -49,6 +50,7 @@ exports.getAll = async function(fields=["petitionId", "title", "categoryId", "au
         GROUP BY Petition.petition_id"
     );
 
+    connection.release();
     return values;
 }
 
@@ -126,6 +128,7 @@ exports.search = async function(params={}, fields=["petitionId", "title", "categ
 
     let [values, _] = await db.query(connection, queryStr, queryArgs);
 
+    connection.release();
     return values;
 }
 
@@ -151,6 +154,7 @@ exports.add = async function(values)
         helper.mapObject(values, nameMap)
     );
 
+    connection.release();
     return value;
 }
 
@@ -168,6 +172,7 @@ exports.delete = async function(id)
         id
     );
 
+    connection.release();
     return value;
 }
 
@@ -195,5 +200,6 @@ exports.update = async function(id, values)
         ]
     );
 
+    connection.release();
     return value;
 }
