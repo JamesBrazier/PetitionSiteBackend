@@ -1,7 +1,8 @@
 const db = require("../../config/db");
-const helper = require("./query.model");
+const helper = require("./helper.model");
 
 const nameMap = {
+    "userId": "user_id",
     "photoFilename": "photo_filename",
     "authToken": "auth_token"
 }
@@ -55,10 +56,12 @@ exports.add = async function(values)
 {
     const connection = await db.getPool().getConnection();
 
+    console.log(values);
+
     let [value, _] = await connection.query(
         "INSERT INTO User \
         SET ?", 
-        values
+        [values]
     );
 
     return value;

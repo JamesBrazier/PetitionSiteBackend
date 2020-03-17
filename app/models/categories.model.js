@@ -1,5 +1,5 @@
 const db = require("../../config/db");
-const helper = require("./query.model")
+const helper = require("./helper.model")
 
 const nameMap = {
     "categoryId": "category_id"

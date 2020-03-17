@@ -1,9 +1,10 @@
 const db = require("../../config/db");
-const helper = require("./query.model")
+const helper = require("./helper.model")
 
 const nameMap = {
     "petitionId": "petition_id",
-    "userId": "signatory_id" 
+    "userId": "signatory_id",
+    "signatoryId": "signatory_id" 
 }
 
 /**

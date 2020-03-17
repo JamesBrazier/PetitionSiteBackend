@@ -1,16 +1,16 @@
 const users = require("../models/users.model");
 const hash = require("object-hash");
 
-exports.add = async function(data) 
+exports.add = async function(req, res) 
 {
     try {
-
+        
     } catch (err) {
         res.status(500).send(`Error registering a user: ${err}`);
     }
 }
 
-exports.login = async function(data) 
+exports.login = async function(req, res) 
 {
     try {
 
@@ -19,7 +19,7 @@ exports.login = async function(data)
     }
 }
 
-exports.logout = async function(data) 
+exports.logout = async function(req, res) 
 {
     try {
 
@@ -28,7 +28,7 @@ exports.logout = async function(data)
     }
 }
 
-exports.get = async function(data) 
+exports.get = async function(req, res) 
 {
     try {
 
@@ -37,7 +37,7 @@ exports.get = async function(data)
     }
 }
 
-exports.update = async function(data)
+exports.update = async function(req, res)
 {
     try {
 

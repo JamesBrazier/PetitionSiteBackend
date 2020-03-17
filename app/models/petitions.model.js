@@ -1,5 +1,5 @@
 const db = require("../../config/db");
-const helper = require("./query.model")
+const helper = require("./helper.model")
 
 const nameMap = {
     "authorId": "author_id",
@@ -8,7 +8,7 @@ const nameMap = {
     "createdDate": "created_date",
     "petitionId": "Petition.petition_id",
     "photoFilename": "photo_filename",
-    "signatures": "COUNT(signatory_id)"
+    "signatureCount": "COUNT(signatory_id)"
 }
 
 /**
@@ -42,7 +42,7 @@ exports.getAll = async function(fields=["petitionId", "title", "categoryId", "au
     const connection = await db.getPool().getConnection();
 
     let [values, _] = await connection.query(
-        helper.genQuery(fields, nameMap) +
+        helper.genSelect(fields, nameMap) +
         "FROM Petition \
             LEFT JOIN Signature \
             ON Petition.petition_id = Signature.petition_id \
@@ -64,7 +64,7 @@ exports.getAll = async function(fields=["petitionId", "title", "categoryId", "au
  * (values are: ALPHABETICAL_ASC, ALPHABETICAL_DESC, SIGNATURES_ASC, SIGNATURES_DESC)
  * @returns the items that match the given parameters
  */
-exports.search = async function(fields=["petitionId", "title", "categoryId", "authorId", "signatures"], params={})
+exports.search = async function(params={}, fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
 {
     let queryStr = helper.genSelect(fields, nameMap) +
                    "FROM Petition \
