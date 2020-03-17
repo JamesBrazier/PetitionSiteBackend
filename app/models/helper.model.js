@@ -27,6 +27,26 @@ exports.genSelect = function(fields, nameMap={})
     return query + '\n';
 }
 
+exports.genSet = function(fields, nameMap={})
+{
+    function get(i) {
+        if (nameMap[fields[i]] != undefined) {
+            return nameMap[fields[i]];
+        } else {
+            return fields[i];
+        }
+    }
+
+    let query = "SET ";
+
+    query += get(0) + " = NULL";
+    for (let i = 1; i < fields.length; ++i) {
+        query += ", " + get(i) + " = NULL";
+    }
+
+    return query + '\n';
+}
+
 /**
  * @description creates a SQL query from the given parameters
  * @param {String} table the name of the table to query

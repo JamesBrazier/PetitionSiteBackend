@@ -94,8 +94,6 @@ exports.add = async function(values)
 {
     const connection = await db.getConnection();
 
-    console.log(values);
-
     let [value, _] = await db.query(connection,
         "INSERT INTO User \
         SET ?", 
@@ -121,6 +119,8 @@ exports.update = async function(id, values)
 {
     const connection = await db.getConnection();
 
+    console.log(helper.mapObject(values, nameMap));
+
     let [value, _] = await db.query(connection,
         "UPDATE User \
         SET ? \
@@ -129,6 +129,20 @@ exports.update = async function(id, values)
             helper.mapObject(values, nameMap),
             id
         ]
+    );
+
+    return value;
+}
+
+exports.clearFields = async function(id, fields)
+{
+    const connection = await db.getConnection();
+
+    let [value, _] = await db.query(connection, 
+        "UPDATE User "
+        + helper.genSet(fields, nameMap) +
+        "WHERE user_id = ?",
+        id
     );
 
     return value;

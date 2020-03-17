@@ -6,7 +6,7 @@ let pool = null;
 exports.createPool = async function () {
     pool = mysql.createPool({
         multipleStatements: true,
-        //debug: true,
+        debug: true,
         host: process.env.SENG365_MYSQL_HOST,
         user: process.env.SENG365_MYSQL_USER,
         password: process.env.SENG365_MYSQL_PASSWORD,
@@ -23,7 +23,7 @@ exports.getConnection = function() {
     try {
         return pool.getConnection();
     } catch (err) { 
-        throw error.InternalError(err.message); 
+        throw new error.InternalError(err.message); 
     }
 }
 
@@ -31,6 +31,6 @@ exports.query = function(connection, str, values=undefined) {
     try {
         return connection.query(str, values);
     } catch (err) { 
-        throw error.BadRequest(err.message); 
+        throw new error.BadRequest(err.message); 
     }
 }
