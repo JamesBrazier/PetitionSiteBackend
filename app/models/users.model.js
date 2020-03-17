@@ -4,7 +4,7 @@ const helper = require("./helper.model");
 const nameMap = {
     "userId": "user_id",
     "photoFilename": "photo_filename",
-    "authToken": "auth_token"
+    "token": "auth_token"
 }
 
 /**
@@ -14,13 +14,51 @@ const nameMap = {
  */
 exports.get = async function(id, fields=["userId", "name", "city", "country", "email"]) 
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
+    let [[value], _] = await db.query(connection,
         helper.genSelect(fields, nameMap) +
         "FROM User \
         WHERE user_id = ?", 
         id
+    );
+
+    return value;
+}
+
+/**
+ * @description returns the user with the given email
+ * @param {String} email the user email
+ * @returns the user details
+ */
+exports.getFromEmail = async function(email, fields=["userId", "name", "city", "country", "email"]) 
+{
+    const connection = await db.getConnection();
+
+    let [[value], _] = await db.query(connection,
+        helper.genSelect(fields, nameMap) +
+        "FROM User \
+        WHERE email = ?", 
+        email
+    );
+
+    return value;
+}
+
+/**
+ * @description returns the user with the given token
+ * @param {Number} token the user token
+ * @returns the user details
+ */
+exports.getFromToken = async function(token, fields=["userId", "name", "city", "country", "email"]) 
+{
+    const connection = await db.getConnection();
+
+    let [[value], _] = await db.query(connection,
+        helper.genSelect(fields, nameMap) +
+        "FROM User \
+        WHERE auth_token = ?", 
+        token
     );
 
     return value;
@@ -32,9 +70,9 @@ exports.get = async function(id, fields=["userId", "name", "city", "country", "e
  */
 exports.getAll = async function(fields=["userId", "name", "city", "country", "email"]) 
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         helper.genSelect(fields, nameMap) + 
         "FROM User"
     );
@@ -47,18 +85,18 @@ exports.getAll = async function(fields=["userId", "name", "city", "country", "em
  * @param {object} values an object wth the given possible values
  * @param {String} values.name the user name (required)
  * @param {String} values.email the user email (required)
- * @param {String} values.password the user password (required)
+ * @param {Number} values.password the user password (required)
  * @param {String} values.city the user home city (optional)
  * @param {String} values.country the users home country (optional)
  * @return details about the addition
  */
 exports.add = async function(values) 
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
     console.log(values);
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         "INSERT INTO User \
         SET ?", 
         [values]
@@ -73,20 +111,24 @@ exports.add = async function(values)
  * @param {object} values an object wth the given optional values
  * @param {String} values.name the user name
  * @param {String} values.email the user email
- * @param {String} values.password the user password
+ * @param {Number} values.password the user password
  * @param {String} values.city the user home city
  * @param {String} values.country the users home country
+ * @param {Number} values.token the users auth token
  * @return details about the change
  */
 exports.update = async function(id, values) 
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         "UPDATE User \
         SET ? \
         WHERE user_id = ?", 
-        [values, id]
+        [
+            helper.mapObject(values, nameMap),
+            id
+        ]
     );
 
     return value;

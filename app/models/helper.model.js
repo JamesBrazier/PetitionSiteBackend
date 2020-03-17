@@ -1,4 +1,5 @@
 const db = require("../../config/db");
+const error = require("../controllers/error.controller")
 
 /**
  * @description generates a select statement from the given fields and alias map
@@ -104,9 +105,17 @@ exports.genQuery = function(table, params=undefined, nameMap={})
  */
 exports.query = async function(table, params=undefined, values=undefined)
 {
-    const connection = await db.getPool().getConnection();
+    try {
+        var connection = await db.getPool().getConnection();
+    } catch (err) { 
+        throw error.InternalError(err.message); 
+    }
 
-    let [response, _] = await connection.query(genQuery(table, params), values);
+    try{
+        var [response, _] = await connection.query(genQuery(table, params), values);
+    } catch (err) { 
+        throw error.BadRequest(err.message); 
+    }
 
     if (params.count != null && params.count === 1) {
         return response[0];
@@ -122,15 +131,12 @@ exports.query = async function(table, params=undefined, values=undefined)
  */
 exports.mapObject = function(obj, nameMap={}) 
 {
-    let result = {};
-
     for (let field in obj) {
         if (nameMap[field] != null) {
-            result[nameMap[field]] = obj[field];
-        } else {
-            result[field] = obj[field];
+            obj[nameMap[field]] = obj[field];
+            delete obj[field];
         }
     }
 
-    return result;
+    return obj;
 }

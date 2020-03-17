@@ -18,9 +18,9 @@ const nameMap = {
  */
 exports.get = async function(id, fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
+    let [[value], _] = await db.query(connection,
         helper.genSelect(fields, nameMap) +
         "FROM Petition \
             LEFT JOIN Signature \
@@ -39,9 +39,9 @@ exports.get = async function(id, fields=["petitionId", "title", "categoryId", "a
  */
 exports.getAll = async function(fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [values, _] = await connection.query(
+    let [values, _] = await db.query(connection,
         helper.genSelect(fields, nameMap) +
         "FROM Petition \
             LEFT JOIN Signature \
@@ -122,9 +122,9 @@ exports.search = async function(params={}, fields=["petitionId", "title", "categ
         }
     }
 
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [values, _] = await connection.query(queryStr, queryArgs);
+    let [values, _] = await db.query(connection, queryStr, queryArgs);
 
     return values;
 }
@@ -144,9 +144,9 @@ exports.add = async function(values)
 {
     values.created_date = new Date();
 
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         "INSERT INTO Petition SET ?",
         helper.mapObject(values, nameMap)
     );
@@ -161,9 +161,9 @@ exports.add = async function(values)
  */
 exports.delete = async function(id)
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         "DELETE FROM Petition WHERE petition_id = ?", 
         id
     );
@@ -185,9 +185,9 @@ exports.delete = async function(id)
  */
 exports.update = async function(id, values)
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         "UPDATE Petition SET ? WHERE petition_id = ?",
         [
             helper.mapObject(values, nameMap), 

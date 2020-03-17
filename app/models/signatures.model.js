@@ -14,9 +14,9 @@ const nameMap = {
  */
 exports.get = async function(petitionId, fields=["petitionId", "userId"])
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         helper.genSelect(fields, nameMap) +
         "FROM Signature \
         WHERE petition_id = ?", 
@@ -34,9 +34,9 @@ exports.get = async function(petitionId, fields=["petitionId", "userId"])
  */
 exports.add = async function(petitionId, userId) 
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         "INSERT INTO Signature \
         SET ?", 
         {
@@ -57,9 +57,9 @@ exports.add = async function(petitionId, userId)
  */
 exports.delete = async function(petitionId, userId)
 {
-    const connection = await db.getPool().getConnection();
+    const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
+    let [value, _] = await db.query(connection,
         "DELETE FROM Signature \
         WHERE petition_id = ? \
             AND signatory_id = ?", 

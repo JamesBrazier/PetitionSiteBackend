@@ -1,4 +1,5 @@
 const mysql = require('mysql2/promise');
+const error = require("../app/controllers/error.controller");
 
 let pool = null;
 
@@ -17,3 +18,19 @@ exports.createPool = async function () {
 exports.getPool = function () {
     return pool;
 };
+
+exports.getConnection = function() {
+    try {
+        return pool.getConnection();
+    } catch (err) { 
+        throw error.InternalError(err.message); 
+    }
+}
+
+exports.query = function(connection, str, values=undefined) {
+    try {
+        return connection.query(str, values);
+    } catch (err) { 
+        throw error.BadRequest(err.message); 
+    }
+}
