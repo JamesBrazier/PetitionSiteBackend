@@ -8,6 +8,9 @@ exports.add = async function(req, res)
         let body = req.body;
         console.log("User request add", body);
 
+        if (body.name == null || body.name.length < 1) {
+            throw new error.BadRequest("No name was included");
+        }
         if (body.email == null || !body.email.includes('@')) {
             throw new error.BadRequest("Email not valid");
         }
@@ -114,6 +117,9 @@ exports.update = async function(req, res)
             throw new error.Forbidden("Request tried to edit non-self user");
         }
 
+        if (body == null) {
+            throw new error.BadRequest("No update data was provided");
+        }
         if (body.email != null && !body.email.includes('@')) {
             throw new error.BadRequest("Email is not valid");
         }
