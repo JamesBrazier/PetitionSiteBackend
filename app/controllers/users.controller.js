@@ -117,7 +117,7 @@ exports.update = async function(req, res)
             throw new error.Forbidden("Request tried to edit non-self user");
         }
 
-        if (body == null) {
+        if (body == null || Object.keys(body).length === 0) {
             throw new error.BadRequest("No update data was provided");
         }
         if (body.email != null && !body.email.includes('@')) {
