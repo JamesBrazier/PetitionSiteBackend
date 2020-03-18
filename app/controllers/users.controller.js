@@ -16,9 +16,9 @@ exports.add = async function(req, res)
         }
         if (body.password == null || body.password.length < 1) {
             throw new error.BadRequest("Password is empty");
-        } else {
-            body.password = hash.SHA256(body.password);
-        }
+        } //else {
+        //    body.password = hash.SHA256(body.password);
+        //}
 
         const info = await users.add(body);
 
@@ -39,7 +39,7 @@ exports.login = async function(req, res)
             throw new error.BadRequest("Password is not valid")
         }
         const user = await users.get(body.email, "email", ["userId", "password"]);
-        if (String(hash.SHA256(body.password)) !== user.password) {
+        if (body.password !== user.password) {
             throw new error.BadRequest("Password is incorrect");
         }
 
@@ -127,11 +127,9 @@ exports.update = async function(req, res)
             if (body.password.length < 1) {
                 throw new error.BadRequest("New password is not valid");
             }
-            if (body.currentPassword == null || 
-                String(hash.SHA256(body.currentPassword)) !== user.password) {
+            if (body.currentPassword == null || body.currentPassword !== user.password) {
                 throw new error.BadRequest("Current password is incorrect");
             }
-            body.password = hash.SHA256(body.password);
             delete body.currentPassword;
         }
 
