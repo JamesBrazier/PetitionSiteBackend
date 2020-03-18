@@ -29,6 +29,7 @@ exports.getConnection = function() {
 
 exports.query = function(connection, str, values=undefined) {
     try {
+        console.log("\nQuery sent:", str, values, '\n');
         return connection.query(str, values);
     } catch (err) { 
         throw new error.BadRequest(err.message); 

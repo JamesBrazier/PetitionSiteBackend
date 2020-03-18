@@ -53,18 +53,27 @@ exports.InternalError = class InternalError extends Error {
 
 exports.catch = function(err, res) 
 {
-    console.error(err);
     switch (err.name) {
     case "BadRequest":
-        res.status(400).send(); break;
+        res.status(400).send(); 
+        console.error("ERROR! 400:", err.message);
+        break;
     case "Unauthorized":
-        res.status(401).send(); break;
+        res.status(401).send(); 
+        console.error("ERROR! 401:", err.message);
+        break;
     case "Forbidden":
-        res.status(403).send(); break;
+        res.status(403).send();
+        console.error("ERROR! 403:", err.message);
+        break;
     case "NotFound":
-        res.status(404).send(); break;
+        res.status(404).send();
+        console.error("ERROR! 404:", err.message);
+        break;
     case "InternalError":
     default:
-        res.status(500).send(); break;
+        console.log(err);
+        res.status(500).send();
+        break;
     }
 }
