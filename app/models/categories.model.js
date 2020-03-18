@@ -10,15 +10,15 @@ const nameMap = {
  * @param {Number} id the category id
  * @returns the category details
  */
-exports.get = async function(id, fields=["categoryId", "name"]) 
+exports.get = async function(queryVal, queryField="categoryId", fields=["categoryId", "name"]) 
 {
     const connection = await db.getConnection();
 
     let [[value], _] = await db.query(connection,
         helper.genSelect(fields, nameMap) +
         "FROM Category \
-        WHERE category_id = ?", 
-        id
+        WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
+        queryVal
     );
 
     connection.release();

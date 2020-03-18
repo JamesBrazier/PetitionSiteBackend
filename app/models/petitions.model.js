@@ -1,5 +1,6 @@
 const db = require("../../config/db");
-const helper = require("./helper.model")
+const helper = require("./helper.model");
+const error = require("../controllers/error.controller");
 
 const nameMap = {
     "authorId": "author_id",
@@ -8,7 +9,8 @@ const nameMap = {
     "createdDate": "created_date",
     "petitionId": "Petition.petition_id",
     "photoFilename": "photo_filename",
-    "signatureCount": "COUNT(signatory_id)"
+    "signatureCount": "COUNT(signatory_id)",
+    "signatures": "COUNT(signatory_id)"
 }
 
 /**
@@ -16,7 +18,8 @@ const nameMap = {
  * @param {Number} id the petition id
  * @returns the petition's details
  */
-exports.get = async function(id, fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
+exports.get = async function(queryVal, queryField="petitionId", 
+    fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
 {
     const connection = await db.getConnection();
 
@@ -25,9 +28,9 @@ exports.get = async function(id, fields=["petitionId", "title", "categoryId", "a
         "FROM Petition \
             LEFT JOIN Signature \
             ON Petition.petition_id = Signature.petition_id \
-        WHERE Petition.petition_id = ? \
+        WHERE " + helper.mapName(queryField, nameMap) + " = ? \
         GROUP BY Petition.petition_id", 
-        id
+        queryVal
     );
 
     connection.release();
@@ -100,6 +103,9 @@ exports.search = async function(params={}, fields=["petitionId", "title", "categ
 
     queryStr += " GROUP BY Petition.petition_id";
     switch (params.sortBy) {
+        case "SIGNATURES_DESC":
+            queryStr += " ORDER BY signatures DESC";
+            break;
         case "SIGNATURES_ASC":
             queryStr += " ORDER BY signatures ASC";
             break;
@@ -110,18 +116,20 @@ exports.search = async function(params={}, fields=["petitionId", "title", "categ
             queryStr += " ORDER BY title DESC";
             break;
         default:
-            queryStr += " ORDER BY signatures DESC";
-            break;
+            throw new error.BadRequest("Sorting enum is not valid");
     }
 
-    if (params.count !== undefined) {
-        if (params.startIndex !== undefined) {
+    if (params.count != null) {
+        if (params.startIndex != null) {
             queryStr += " LIMIT ?, ?"
             queryArgs.push(params.startIndex, params.count);
         } else {
             queryStr += " LIMIT ?";
             queryArgs.push(params.count);
         }
+    } else if (params.startIndex != null) {
+        queryStr += " LIMIT ?, ?"
+        queryArgs.push(params.startIndex, Number.MAX_SAFE_INTEGER);
     }
 
     const connection = await db.getConnection();

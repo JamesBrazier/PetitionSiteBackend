@@ -12,55 +12,16 @@ const nameMap = {
  * @param {Number} id the user id
  * @returns the user details
  */
-exports.get = async function(id, fields=["userId", "name", "city", "country", "email"]) 
+exports.get = async function(queryVal, queryField="userId", 
+    fields=["userId", "name", "city", "country", "email"]) 
 {
     const connection = await db.getConnection();
 
     let [[value], _] = await db.query(connection,
         helper.genSelect(fields, nameMap) +
         "FROM User \
-        WHERE user_id = ?", 
-        id
-    );
-
-    connection.release();
-    return value;
-}
-
-/**
- * @description returns the user with the given email
- * @param {String} email the user email
- * @returns the user details
- */
-exports.getFromEmail = async function(email, fields=["userId", "name", "city", "country", "email"]) 
-{
-    const connection = await db.getConnection();
-
-    let [[value], _] = await db.query(connection,
-        helper.genSelect(fields, nameMap) +
-        "FROM User \
-        WHERE email = ?", 
-        email
-    );
-
-    connection.release();
-    return value;
-}
-
-/**
- * @description returns the user with the given token
- * @param {Number} token the user token
- * @returns the user details
- */
-exports.getFromToken = async function(token, fields=["userId", "name", "city", "country", "email"]) 
-{
-    const connection = await db.getConnection();
-
-    let [[value], _] = await db.query(connection,
-        helper.genSelect(fields, nameMap) +
-        "FROM User \
-        WHERE auth_token = ?", 
-        token
+        WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
+        queryVal
     );
 
     connection.release();
@@ -123,8 +84,6 @@ exports.update = async function(id, values)
 {
     const connection = await db.getConnection();
 
-    console.log(helper.mapObject(values, nameMap));
-
     let [value, _] = await db.query(connection,
         "UPDATE User \
         SET ? \
@@ -145,7 +104,7 @@ exports.clearFields = async function(id, fields)
 
     let [value, _] = await db.query(connection, 
         "UPDATE User "
-        + helper.genSet(fields, nameMap) +
+        + helper.genSetNull(fields, nameMap) +
         "WHERE user_id = ?",
         id
     );

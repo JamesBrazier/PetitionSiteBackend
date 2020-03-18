@@ -12,15 +12,15 @@ const nameMap = {
  * @param {Number} petID the id of the Petition
  * @returns a list of the signatures the petition has
  */
-exports.get = async function(petitionId, fields=["petitionId", "userId"])
+exports.get = async function(queryVal, queryField="petitionId", fields=["petitionId", "userId"])
 {
     const connection = await db.getConnection();
 
     let [value, _] = await db.query(connection,
         helper.genSelect(fields, nameMap) +
         "FROM Signature \
-        WHERE petition_id = ?", 
-        petitionId
+        WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
+        queryVal
     );
 
     connection.release();

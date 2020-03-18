@@ -1,6 +1,3 @@
-const db = require("../../config/db");
-const error = require("../controllers/error.controller")
-
 /**
  * @description generates a select statement from the given fields and alias map
  * @param {Array<String>} fields the list of field names
@@ -27,7 +24,16 @@ exports.genSelect = function(fields, nameMap={})
     return query + '\n';
 }
 
-exports.genSet = function(fields, nameMap={})
+exports.mapName = function(name, nameMap) 
+{
+    if (nameMap[name] != undefined) {
+        return nameMap[name];
+    } else {
+        return name;
+    }
+}
+
+exports.genSetNull = function(fields, nameMap={})
 {
     function get(i) {
         if (nameMap[fields[i]] != undefined) {
@@ -48,104 +54,6 @@ exports.genSet = function(fields, nameMap={})
 }
 
 /**
- * @description creates a SQL query from the given parameters
- * @param {String} table the name of the table to query
- * @param {object} params the other optional parameters
- * @param {Array<String>} params.fields the fields to return
- * @param {Array<Array<String>>} params.join list of tables to join to, each join is a list of the join table, 
- * join table column, and table column
- * @param {String} params.clause the clause string to filter items, use ? for arguments
- * @param {String} params.sort the column to sort by, add ASC or DESC for order
- * @param {Number} params.count the number of elements to return
- * @param {Number} params.startIndex the starting index of elements to return
- * @param {object} nameMap the field name alias map
- * @returns the string query
- */
-exports.genQuery = function(table, params=undefined, nameMap={}) 
-{
-    let query;
-
-    if (params.fields != null) {
-        query = genSelect(params.fields, nameMap);
-    } else {
-        query = "SELECT *\n";
-    }
-
-    query += "FROM " + table + '\n';
-
-    if (params != null) {
-        if (params.join != null) {
-            for (const join of params.join) {
-                query += "\tJOIN " + join[0];
-                query += "\n\tON " + table + '.' + join[1] + " = " + join[0] + '.' + join[2] + '\n';
-            }
-            if (params.clause != null) {
-                query += "WHERE " + params.clause + '\n';
-            }
-            query += "GROUP BY " + table + '.' + params.join[0][1];
-            for (let i = 1; i < params.join.length; ++i) {
-                query += ", " + table + '.' + params.join[i][1];
-            }
-            query += '\n';
-        } else {
-            if (params.clause != null) {
-                query += "WHERE " + params.clause + '\n';
-            }
-        }
-
-        if (params.sort != null) {
-            query += "ORDER BY " + params.sort + '\n';
-        }
-
-        if (params.count != null && Number(params.count) != NaN) {
-            if (params.startIndex != null && Number(params.startIndex) != NaN) {
-                query += "LIMIT " + params.startIndex + ", " + params.count + '\n';
-            } else {
-                query += "LIMIT " + params.count + '\n';
-            }
-        }
-    }
-
-    return query;
-}
-
-/**
- * @description creates a SQL query sends it to the db and returns requested
- * @param {String} table the name of the table to query
- * @param {object} params the other optional parameters
- * @param {Array<String>} params.fields the fields to return
- * @param {Array<Array<String>>} params.join list of tables to join to, each join is a list 
- *                               of the join table, join table column, and table column
- * @param {String} params.clause the clause string to filter items, use ? for arguments
- * @param {String} params.sort the column to sort by, add ASC or DESC for order
- * @param {Number} params.count the number of elements to return
- * @param {Number} params.startIndex the starting index of elements to return
- * @param {Array} values the params to insert into the query after checking for safety
- * @returns the string query
- */
-exports.query = async function(table, params=undefined, values=undefined)
-{
-    try {
-        var connection = await db.getPool().getConnection();
-    } catch (err) { 
-        throw error.InternalError(err.message); 
-    }
-
-    try{
-        var [response, _] = await connection.query(genQuery(table, params), values);
-    } catch (err) { 
-        throw error.BadRequest(err.message); 
-    }
-
-    connection.release();
-    if (params.count != null && params.count === 1) {
-        return response[0];
-    } else {
-        return response;
-    }
-}
-
-/**
  * @description creates a new object where the fields with the aliases in the map are resplaced
  * @param {object} obj the object to map
  * @param {object} nameMap the field name alias map
@@ -161,3 +69,230 @@ exports.mapObject = function(obj, nameMap={})
 
     return obj;
 }
+
+// function aliasField(str, aliasMap={})
+// {
+//     if (aliasMap[str] != null) {
+//         return aliasMap[str] + " AS " + str;
+//     } else {
+//         return str;
+//     }
+// }
+
+// String.prototype.equals = function(number)
+// {
+//     number = Number(number);
+
+//     return this + " = " + number;
+// }
+
+// String.prototype.lessThan = function(number)
+// {
+//     number = Number(number);
+
+//     return this + " < " + number;
+// }
+
+// String.prototype.moreThan = function(number)
+// {
+//     number = Number(number);
+
+//     return this + " > " + number;
+// }
+
+// String.prototype.lessThanEqual = function(number)
+// {
+//     number = Number(number);
+
+//     return this + " <= " + number;
+// }
+
+// String.prototype.moreThanEqual = function(number)
+// {
+//     number = Number(number);
+
+//     return this + " >= " + number;
+// }
+
+// String.prototype.between = function(a, b)
+// {
+//     a = Number(a);
+//     b = Number(b);
+
+//     return this + " BETWEEN " + a + " AND " + b;
+// }
+
+// String.prototype.and = function(table) 
+// {
+//     return this + " AND " + table;
+// }
+
+// String.prototype.or = function(table)
+// {
+//     return this + " OR " + table;
+// }
+
+// String.prototype.openBrace = function() 
+// {
+//     return this + " (";
+// }
+
+// String.prototype.closeBrace = function()
+// {
+//     return this + ") ";
+// }
+
+// exports.Table = class Table 
+// {
+//     connection;
+//     name;
+//     aliasMap;
+//     joinDef;
+//     key;
+
+//     constructor(name, key, joinDef)
+//     {
+//         let aliasMap = {};
+//         for (let key in this) {
+//             aliasMap[this[key]] = key;
+//         }
+
+//         this.aliasMap = aliasMap;
+//         this.name = name;
+//         this.joinDef = joinDef;
+//         this.key = key;
+//     }
+
+//     query(fields, clause=undefined, sort=undefined, 
+//         order=undefined, limit=undefined, start=undefined)
+//     {
+//         this.joinQuery(fields, undefined, clause, sort, order, limit, start);
+//     }
+
+//     joinQuery(fields, join=undefined, clause=undefined, sort=undefined, 
+//         order=undefined, limit=undefined, start=undefined)
+//     {
+//         let query = "SELECT ";
+
+//         query += aliasField(fields[0], this.aliasMap);
+//         for (let i = 1; i < fields.length; ++i) {
+//             query += ", " + aliasField(fields[i], this.aliasMap);
+//         }
+//         query += '\n';    
+
+//         query += "FROM " + this.name + '\n';
+
+//         if (join != null) {
+//             for (const table of join) {
+//                 query += "    JOIN " + table.name + '\n';
+//                 query += "    ON " + this.joinDef[table.name] + '\n';
+//             }
+//             if (clause != null) {
+//                 query += "WHERE " + clause + '\n';
+//             }
+//             query += "GROUP BY " + this.key + '\n';
+//         } else {
+//             if (clause != null) {
+//                 query += "WHERE " + clause + '\n';
+//             }
+//         }
+
+//         if (sort != null) {
+//             query += "ORDER BY " + sort;
+//             if (order != null) {
+//                 query += " " + order;
+//             }
+//             query += '\n';
+//         }
+
+//         if (limit != null && Number(limit) != NaN) {
+//             if (start != null && Number(start) != NaN) {
+//                 query += "LIMIT " + start + ", " + limit + '\n';
+//             } else {
+//                 query += "LIMIT " + limit + '\n';
+//             }
+//         }
+
+//         const connection = db.getConnection();
+
+//         let [values, _] = db.query(this.connection, query);
+
+//         connection.release();
+//         return values;
+//     }
+
+//     insert(values) 
+//     {
+//         const connection = db.getConnection();
+
+//         let [info, _] = db.query(this.connection,
+//             "INSERT INTO " + this.name + "SET ?", 
+//             helper.mapObject(values, this.aliasMap)
+//         );
+
+//         connection.release();
+//         return info;
+//     }
+
+//     update(values, clause=undefined)
+//     {
+//         const connection = db.getConnection();
+
+//         let [info, _] = db.query(this.connection,
+//             "UPDATE " + this.name + " SET ? WHERE " + clause,
+//             helper.mapObject(values, this.aliasMap)
+//         );
+
+//         connection.release();
+//         return info;
+//     }
+
+//     delete(clause) 
+//     {
+//         const connection = db.getConnection();
+
+//         let [info, _] = db.query(connection,
+//             "DELETE FROM " + this.name + " WHERE " + clause
+//         );
+
+//         connection.release();
+//         return info;
+//     }
+
+//     clear(fields, clause)
+//     {
+//         let query = "UPDATE " + this.name + "SET ";
+
+//         query += fields[0] + " = NULL";
+//         for (let i = 1; i < fields.length; ++i) {
+//             query += ", " + fields[i] + " = NULL";
+//         }
+
+//         query += " WHERE " + clause;
+
+//         const connection = db.getConnection();
+
+//         let [info, _] = db.query(this.connection,
+//             query,
+//             helper.mapObject(values, this.aliasMap)
+//         );
+
+//         connection.release();
+//         return info;
+//     }
+// }
+
+// module.exports = class Signature extends helper.Table
+// {
+//     petitionId = "Signature.petition_id";
+//     signatoryId = "Signature.signatory_id";
+//     signedDate = "Signature.signed_date";
+
+//     constructor()
+//     {
+//         super("Siganture", "Signature.signatory_id", {
+//             "Petition": "Petition.petition_id = Signature.petition_id",
+//             "User": "User.user_id = Signature.signatory_id"
+//         });
+//     }
+// }

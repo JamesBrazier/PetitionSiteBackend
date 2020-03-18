@@ -35,13 +35,13 @@ exports.login = async function(req, res)
         if (body.password == null) {
             throw new error.BadRequest("Password is not valid")
         }
-        const user = await users.getFromEmail(body.email, ["userId", "password"]);
+        const user = await users.get(body.email, "email", ["userId", "password"]);
         if (hash.sha1(body.password) !== user.password) {
             throw new error.BadRequest("Password is incorrect");
         }
 
         //const token = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-        const token = 1337;
+        const token = 1337; // test value, i hope its not still here
         await users.update(user.userId, { token: token });
 
         user.token = token;
@@ -59,7 +59,7 @@ exports.logout = async function(req, res)
         const token = req.get("X-Authorization");
         console.log("User request logout", token);
 
-        const user = await users.getFromToken(token);
+        const user = await users.get(token, "token", ["userId"]);
         if (user == null) {
             throw new error.Unauthorized("Request is not from an authorised user");
         }
@@ -80,7 +80,7 @@ exports.get = async function(req, res)
         const token = req.get("X-Authorization");
         console.log(`User request view ${id} with ${token}`)
 
-        const user = await users.get(id, ["name", "city", "country", "email", "token"]);
+        const user = await users.get(id, "userId", ["name", "city", "country", "email", "token"]);
         if (user == null) {
             throw new error.NotFound("user with id not found");
         }
@@ -109,7 +109,7 @@ exports.update = async function(req, res)
             throw new error.Unauthorized("Request is not from an authorised user");
         }
 
-        const user = await users.get(id, ["token", "password"]);
+        const user = await users.get(id, "userId", ["token", "password"]);
         if (user.token !== token) {
             throw new error.Forbidden("Request tried to edit non-self user");
         }
