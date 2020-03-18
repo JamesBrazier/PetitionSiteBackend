@@ -39,8 +39,8 @@ exports.login = async function(req, res)
             throw new error.BadRequest("Password is not valid")
         }
         const user = await users.get(body.email, "email", ["userId", "password"]);
-        if (body.password !== user.password) {
-            throw new error.BadRequest("Password is incorrect");
+        if (user == null || body.password !== user.password) {
+            throw new error.BadRequest("Password or email is incorrect");
         }
 
         const token = hash.MD5(String(Math.random()));
