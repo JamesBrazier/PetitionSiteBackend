@@ -43,8 +43,8 @@ exports.login = async function(req, res)
             throw new error.BadRequest("Password is incorrect");
         }
 
-        //const token = hash.MD5(String(Math.random()));
-        const token = 1337; // test value, i hope its not still here
+        const token = hash.MD5(String(Math.random()));
+        //const token = 1337; // test value, i hope its not still here
         await users.update(user.userId, { token: token });
 
         user.token = token;
