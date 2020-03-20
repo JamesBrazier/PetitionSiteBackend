@@ -9,6 +9,9 @@ exports.get = async function(req, res)
         console.log("Users.photo request view", id);
 
         const user = await users.get(id, "userId", ["photoFilename"]);
+        if (user == null) {
+            throw new error.NotFound("no user with given id found");
+        }
 
         const image = await file.loadPhoto(user.photoFilename);
 
@@ -36,6 +39,10 @@ exports.set = async function(req, res)
         const user = await users.getAuth(token, ["userId", "photoFilename"]);
         if (user.userId != id) {
             throw new error.Forbidden("client tried to edit non-self user");
+        }
+
+        if (await users.get(id ["userId"], ["userId"]) == null) {
+            throw new error.NotFound("no user with given id found");
         }
 
         const filename = "user_" + user.userId + '.' + content;

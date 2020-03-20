@@ -15,6 +15,10 @@ exports.view = async function(req, res)
             "authorCountry", "createdDate", "closingDate"
         ]);
 
+        if (petition == null) {
+            throw new error.NotFound("no petition with given id found");
+        }
+
         res.status(200).send(petition);
         console.log("Responded with", petition);
     } catch (err) {
@@ -88,6 +92,9 @@ exports.update = async function(req, res)
 
         const user = await users.getAuth(token, ["userId"]);
         const petition = await petitions.get(id, "petitionId", ["petitionId", "authorId"]);
+        if (petition == null) {
+            throw new error.NotFound("no petition with given id found");
+        }
 
         if (petition.authorId !== user.userId) {
             throw new error.Forbidden("client tried to edit someone else's petition");
@@ -122,6 +129,9 @@ exports.delete = async function(req, res)
 
         const user = await users.getAuth(token, ["userId"]);
         const petition = await petitions.get(id, "petitionId", ["petitionId", "authorId"]);
+        if (petition == null) {
+            throw new error.NotFound("no petition with given id found");
+        }
 
         if (petition.authorId !== user.userId) {
             throw new error.Forbidden("client tried to delete someone else's petition");

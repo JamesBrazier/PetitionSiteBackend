@@ -26,10 +26,6 @@ exports.get = async function(queryVal, queryField="userId",
     );
 
     connection.release();
-
-    if (value == null) {
-        throw new error.NotFound(`no user with given ${queryField} was found`);
-    }
     return value;
 }
 

@@ -23,10 +23,6 @@ exports.get = async function(queryVal, queryField="categoryId", fields=["categor
     );
 
     connection.release();
-
-    if (value == null) {
-        throw new error.NotFound(`no category with given ${queryField} was found`);
-    }
     return value;
 }
 

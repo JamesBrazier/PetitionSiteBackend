@@ -39,7 +39,7 @@ exports.login = async function(req, res)
             throw new error.BadRequest("Password is not valid")
         }
         const user = await users.get(body.email, "email", ["userId", "password"]);
-        if (body.password !== user.password) {
+        if (user == null || body.password !== user.password) {
             throw new error.BadRequest("Password or email is incorrect");
         }
 
@@ -80,6 +80,9 @@ exports.get = async function(req, res)
         console.log(`User request view ${id} with ${token}`)
 
         const user = await users.get(id, "userId", ["name", "city", "country", "email", "token"]);
+        if (user == null) {
+            throw new error.NotFound("no user with given id found");
+        }
 
         if (token == null || user.token !== token) {
             delete user.email;

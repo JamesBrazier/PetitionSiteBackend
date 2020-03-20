@@ -42,10 +42,6 @@ exports.get = async function(queryVal, queryField="petitionId",
     );
 
     connection.release();
-
-    if (value == null) {
-        throw new error.NotFound(`no petition with given ${queryField} was found`);
-    }
     return value;
 }
 
