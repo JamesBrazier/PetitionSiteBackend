@@ -158,7 +158,8 @@ exports.add = async function(values)
     const connection = await db.getConnection();
 
     let [value, _] = await db.query(connection,
-        "INSERT INTO Petition SET ?",
+        "INSERT INTO Petition \
+        SET ?",
         helper.mapObject(values, nameMap)
     );
 
@@ -176,7 +177,8 @@ exports.delete = async function(id)
     const connection = await db.getConnection();
 
     let [value, _] = await db.query(connection,
-        "DELETE FROM Petition WHERE petition_id = ?", 
+        "DELETE FROM Petition \
+        WHERE petition_id = ?", 
         id
     );
 
@@ -201,7 +203,8 @@ exports.update = async function(id, values)
     const connection = await db.getConnection();
 
     let [value, _] = await db.query(connection,
-        "UPDATE Petition SET ? WHERE petition_id = ?",
+        "UPDATE Petition SET ? \
+        WHERE petition_id = ?",
         [
             helper.mapObject(values, nameMap), 
             id

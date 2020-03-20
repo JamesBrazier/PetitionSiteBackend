@@ -5,6 +5,7 @@ const photoPath = "storage/photos/";
 
 exports.savePhoto = async function(image, filename)
 {
+    console.log(image, filename)
     const path = photoPath + filename;
     const replaced = await fs.exists(path);
     

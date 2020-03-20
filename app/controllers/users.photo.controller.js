@@ -17,6 +17,7 @@ exports.get = async function(req, res)
         const image = await file.loadPhoto(user.photoFilename);
 
         res.status(200).contentType(image.type).send(image.data);
+        console.log("Responeded with", user.photoFilename);
     } catch (err) {
         error.catch(err, res);
     }
@@ -48,6 +49,7 @@ exports.set = async function(req, res)
             await users.update(id, {photoFilename: filename});
             res.status(201).send();
         }
+        console.log("Responed");
     } catch (err) {
         error.catch(err, res);
     }
@@ -68,6 +70,7 @@ exports.delete = async function(req, res)
         await file.deletePhoto(user.photoFilename);
         await users.clearFields(id, ["photoFilename"]);
         res.status(200).send();
+        console.log("Responded")
     } catch (err) {
         error.catch(err, res);
     }
