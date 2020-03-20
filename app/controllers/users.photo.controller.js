@@ -43,9 +43,9 @@ exports.set = async function(req, res)
 
         const filename = "user_" + user.userId + '.' + content;
         if (await file.savePhoto(image, filename)) {
-            await users.update(id, {photoFilename: filename});
             res.status(200).send();
         } else {
+            await users.update(id, {photoFilename: filename});
             res.status(201).send();
         }
     } catch (err) {

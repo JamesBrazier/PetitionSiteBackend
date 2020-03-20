@@ -5,7 +5,6 @@ const photoPath = "storage/photos/";
 
 exports.savePhoto = async function(image, filename)
 {
-    console.log(filename, image)
     const path = photoPath + filename;
     const replaced = await fs.exists(path);
     
@@ -55,12 +54,8 @@ exports.deletePhoto = function(filename)
 exports.delete = async function(filePath) 
 {
     try {
-        await fs.rmdir(filePath);
+        await fs.unlink(filePath);
     } catch (err) {
-        if (err.code === "ENOTDIR") {
-            throw new error.NotFound("file not found at directory", filePath);
-        } else {
-            throw err;
-        }
+        throw new error.NotFound(err.message);
     }
 }

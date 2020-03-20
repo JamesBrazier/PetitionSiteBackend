@@ -61,7 +61,7 @@ exports.logout = async function(req, res)
         const token = req.get("X-Authorization");
         console.log("User request logout", token);
 
-        const user = await user.getAuth(token, ["userId"]);
+        const user = await users.getAuth(token, ["userId"]);
 
         await users.clearFields(user.userId, ["token"]);
 

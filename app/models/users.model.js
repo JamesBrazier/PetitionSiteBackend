@@ -1,5 +1,6 @@
 const db = require("../../config/db");
 const helper = require("../middleware/sql.middleware");
+const error = require("../middleware/error.middleware")
 
 const nameMap = {
     "userId": "user_id",
