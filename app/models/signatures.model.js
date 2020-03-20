@@ -4,7 +4,7 @@ const helper = require("../middleware/sql.middleware");
 const nameMap = {
     "petitionId": "petition_id",
     "userId": "signatory_id",
-    "signatoryId": "signatory_id" 
+    "signatoryId": "signatory_id"
 }
 
 /**

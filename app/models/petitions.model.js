@@ -4,7 +4,11 @@ const error = require("../middleware/error.middleware");
 
 const nameMap = {
     "authorId": "author_id",
-    "categoryId": "category_id",
+    "authorName": "User.name",
+    "authorCity": "User.city",
+    "authorCountry": "User.country",
+    "categoryId": "Petition.category_id",
+    "category": "Category.name",
     "closingDate": "closing_date",
     "createdDate": "created_date",
     "petitionId": "Petition.petition_id",
@@ -19,7 +23,7 @@ const nameMap = {
  * @returns the petition's details
  */
 exports.get = async function(queryVal, queryField="petitionId", 
-    fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
+    fields=["petitionId", "title", "category", "authorId", "signatures"])
 {
     const connection = await db.getConnection();
 
@@ -28,12 +32,20 @@ exports.get = async function(queryVal, queryField="petitionId",
         "FROM Petition \
             LEFT JOIN Signature \
             ON Petition.petition_id = Signature.petition_id \
+            JOIN Category \
+            ON Petition.category_id = Category.category_id \
+            JOIN User \
+            ON Petition.author_id = User.user_id \
         WHERE " + helper.mapName(queryField, nameMap) + " = ? \
         GROUP BY Petition.petition_id", 
         queryVal
     );
 
     connection.release();
+
+    if (value == null) {
+        throw new error.NotFound(`no petition with given ${queryField} was found`);
+    }
     return value;
 }
 
@@ -41,7 +53,7 @@ exports.get = async function(queryVal, queryField="petitionId",
  * @description returns all the petitions is the database
  * @returns a list of the petitions
  */
-exports.getAll = async function(fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
+exports.getAll = async function(fields=["petitionId", "title", "category", "authorId", "signatures"])
 {
     const connection = await db.getConnection();
 
@@ -50,6 +62,10 @@ exports.getAll = async function(fields=["petitionId", "title", "categoryId", "au
         "FROM Petition \
             LEFT JOIN Signature \
             ON Petition.petition_id = Signature.petition_id \
+            JOIN Category \
+            ON Petition.category_id = Category.category_id \
+            JOIN User \
+            ON Petition.author_id = User.user_id \
         GROUP BY Petition.petition_id"
     );
 
@@ -62,32 +78,37 @@ exports.getAll = async function(fields=["petitionId", "title", "categoryId", "au
  * @param {object} params the query parameters with the given possible fields
  * @param {Number} params.startIndex the number of items to skip before returning results
  * @param {Number} params.count the number of items to include in result
- * @param {String} params.query include only items that include this in their title
+ * @param {String} params.q include only items that include this in their title
  * @param {Number} params.categoryId include only items that have this category
  * @param {Number} params.authorId include only items authored by the given user id
  * @param {String} params.sortBy sort returned items in the given way 
  * (values are: ALPHABETICAL_ASC, ALPHABETICAL_DESC, SIGNATURES_ASC, SIGNATURES_DESC)
  * @returns the items that match the given parameters
  */
-exports.search = async function(params={}, fields=["petitionId", "title", "categoryId", "authorId", "signatures"])
+exports.search = async function(params={}, 
+    fields=["petitionId", "title", "category", "authorId", "signatures"])
 {
     let queryStr = helper.genSelect(fields, nameMap) +
                    "FROM Petition \
                         LEFT JOIN Signature \
-                        ON Petition.petition_id = Signature.petition_id";
+                        ON Petition.petition_id = Signature.petition_id \
+                        JOIN Category \
+                        ON Petition.category_id = Category.category_id \
+                        JOIN User \
+                        ON Petition.author_id = User.user_id"
     let queryArgs = [];
 
     queryStr += " WHERE"
-    if (params.query !== undefined) {
+    if (params.q !== undefined) {
         queryStr += " title LIKE ?";
-        queryArgs.push('%' + params.query + '%');
+        queryArgs.push('%' + params.q + '%');
     } else {
         queryStr += " true";
     }
 
     queryStr += " AND"
     if (params.categoryId !== undefined) {
-        queryStr += " category_id = ?";
+        queryStr += " Petition.category_id = ?";
         queryArgs.push(params.categoryId);
     } else {
         queryStr += " true";
@@ -103,11 +124,12 @@ exports.search = async function(params={}, fields=["petitionId", "title", "categ
 
     queryStr += " GROUP BY Petition.petition_id";
     switch (params.sortBy) {
+        case undefined:
         case "SIGNATURES_DESC":
-            queryStr += " ORDER BY signatures DESC";
+            queryStr += " ORDER BY signatureCount DESC";
             break;
         case "SIGNATURES_ASC":
-            queryStr += " ORDER BY signatures ASC";
+            queryStr += " ORDER BY signatureCount ASC";
             break;
         case "ALPHABETICAL_ASC":
             queryStr += " ORDER BY title ASC";
@@ -148,13 +170,12 @@ exports.search = async function(params={}, fields=["petitionId", "title", "categ
  * @param {Number} values.authorId the id of the user who created the petition (required)
  * @param {Number} values.categoryId the id of the category this belongs to (required)
  * @param {Date} values.closingDate the date this petition will end (optional)
+ * @param {Date} values.createdDate the current date (required)
  * @param {String} values.photoFilename the path to the hero image for the petition (optional)
  * @returns details about the addition
  */
 exports.add = async function(values)
 {
-    values.created_date = new Date();
-
     const connection = await db.getConnection();
 
     let [value, _] = await db.query(connection,

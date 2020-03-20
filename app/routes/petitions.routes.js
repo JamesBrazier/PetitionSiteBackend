@@ -7,9 +7,9 @@ module.exports = function(app)
     app.route(url).get(controller.search)
                   .post(controller.add);
 
+    app.route(url + "/categories").get(controller.viewCategories);
+
     app.route(url + "/:id").get(controller.view)
                            .patch(controller.update)
                            .delete(controller.delete);
-
-    app.route(url + "/categories").get(controller.categories);
 }

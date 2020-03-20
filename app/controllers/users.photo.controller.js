@@ -10,10 +10,6 @@ exports.get = async function(req, res)
 
         const user = await users.get(id, "userId", ["photoFilename"]);
 
-        if (user == null) {
-            throw new error.NotFound("User with id not found");
-        }
-
         const image = await file.loadPhoto(user.photoFilename);
 
         res.status(200).contentType(image.type).send(image.data);

@@ -1,6 +1,7 @@
 const petitions = require("../models/petitions.model");
 const categories = require("../models/categories.model");
 const users = require("../models/users.model");
+const error = require("../middleware/error.middleware");
 
 exports.view = async function(req, res) 
 {
@@ -8,113 +9,72 @@ exports.view = async function(req, res)
         const id = req.params.id;
         console.log("Petition request view", id);
 
-        const petition = await petitions.get(req.params.id);
+        const petition = await petitions.get(id, "petitionId", [
+            "petitionId", "title", "category", "authorName", 
+            "signatureCount", "description", "authorId", "authorCity", 
+            "authorCountry", "createdDate", "closingDate"
+        ]);
 
-        if (petition == null) {
-            console.error("Petition not found")
-            res.status(404).send();
-            return;
-        }
-
-        const user = await users.get(petition.author_id);
-
-        const response = {
-            petitionId: petition.petition_id,
-            title: petition.title,
-            category: (await categories.get(petition.category_id)).name,
-            authorName: user.name,
-            signatureCount: petition.signatures,
-            description: petition.description,
-            authorId: petition.author_id,
-            authorCity: user.city,
-            authorCountry: user.country,
-            createdDate: petition.created_date,
-            closingDate: petition.closing_date
-        };
-
-        res.status(200).send(response);
-        console.log("Responded with", response);
+        res.status(200).send(petition);
+        console.log("Responded with", petition);
     } catch (err) {
-        console.error(err)
-        res.status(500).send();
+        error.catch(err, res);
     }
 }
 
 exports.search = async function(req, res) 
 {
     try {
-        let query;
+        const query = req.query;
+        console.log("Petition request search with", query)
 
-        try {
-            query = {
-                start_index: Number(req.query.startIndex),
-                count: Number(req.query.count),
-                query: req.query.q,
-                category_id: Number(req.query.categoryId),
-                author_id: Number(req.query.authorId),
-                sort_by: req.query.sortBy
-            }
-    
-            if (await categories.get(query.category_id) == null || 
-                !query.sort_by in ["ALPHABETICAL_ASC", "ALPHABETICAL_DESC", "SIGNATURES_ASC", "SIGNATURES_DESC"]) {
-                throw new Error("assertion failed");
-            }
-    
-            console.log("Petition request search", query);
-        } catch (err) {
-            console.error(err)
-            res.status(400).send()
-            return;
+        if (query.startIndex != null) query.startIndex = Number(query.startIndex);
+        if (query.count != null) query.count = Number(query.count);
+
+        if (query.categoryId != null) {
+            query.categoryId = Number(query.categoryId);
+            await categories.get(query.categoryId);
+        }
+        if (query.authorId != null) {
+            query.authorId = Number(query.authorId);
+            await users.get(query.authorId);
         }
 
-        const matched = await petitions.search(query);
+        const matched = await petitions.search(query, 
+            ["petitionId", "title", "category", "authorName", "signatureCount"]
+        );
 
-        let response = []
-        for (const match of matched) {
-            response.push({
-                petitionId: match.petition_id,
-                title: match.title,
-                category: (await categories.get(match.category_id)).name,
-                authorName: (await users.get(match.author_id)).name,
-                signatureCount: match.signatures
-            });
-        }
-
-        res.status(200).send(response);
-        console.log("Responded with", response);
+        res.status(200).send(matched);
+        console.log("Responded with", matched);
     } catch (err) {
-        console.error(err)
-        res.status(500).send();
+        error.catch(err, res);
     }
 }
 
 exports.add = async function(req, res) 
 {
     try {
-        let newPet;
+        const data = req.body;
+        const token = req.get("X-Authorization");
+        console.log("Petition request add", data, "with", token);
 
-        try {
-            const data = req.body;
-            console.log("Petition request add", data);
+        const user = await users.getAuth(token, ["userId"]);
+        data.authorId = user.userId;
 
-            newPet = {
-                title: data.title,
-                description: data.description,
-                category_id: data.categoryId,
-                closing_date: data.closingDate
-            }
-        } catch (err) {
-            console.error(err);
-            res.status(400).send();
-            return;
+        data.createdDate = new Date();
+        if (data.closingDate != null && new Date(data.closingDate) <= data.createdDate) {
+            throw new error.BadRequest("Closing date is not in the future");
+        }
+        if (await categories.get(data.categoryId) == null) {
+            throw new error.BadRequest("category is invalid");
         }
 
-        newPet = await petitions.add(newPet);
-        res.status(201).send(newPet.insertedId);
-        console.log("Responded with", newPet.insertedId);
+        const newPet = await petitions.add(data);
+
+        res.status(201).send({ petitionId: newPet.insertId });
+        console.log("Responded with", newPet.insertId);
     } catch (err) {
-        console.error(err);
-        res.status(500).send();
+        error.catch(err, res);
     }
 }
 
@@ -122,30 +82,34 @@ exports.update = async function(req, res)
 {
     try {
         const id = req.params.id;
+        const token = req.get("X-Authorization");
         const data = req.body;
+        console.log(`Petition request update ${id} with`, data, "and", token);
 
-        console.log(`Petition request update ${id} with`, data);
+        const user = await users.getAuth(token, ["userId"]);
+        const petition = await petitions.get(id, "petitionId", ["petitionId", "authorId"]);
 
-        const petition = await petitions.get(id);
-
-        if (petition == null) {
-            console.error("Petition not found");
-            res.status(404).send();
-            return;
+        if (petition.authorId !== user.userId) {
+            throw new error.Forbidden("client tried to edit someone else's petition");
+        }
+        const currentDate = new Date();
+        if (petition.closingDate <= currentDate) {
+            throw new error.Forbidden("client is trying to edit expired petition");
         }
 
-        await petitions.update({
-            title: data.title,
-            description: data.description,
-            category_id: data.categoryId,
-            closing_date: closingDate
-        });
+        if (data.closingDate != null && new Date(data.closingDate) <= currentDate) {
+            throw new error.BadRequest("Closing date is not in the future");
+        }
+        if (data.categoryId != null && await categories.get(data.categoryId) == null) {
+            throw new error.BadRequest("category is invalid");
+        }
+
+        await petitions.update(petition.petitionId, data);
 
         res.status(200).send();
         console.log("Responded")
     } catch (err) {
-        console.error(err);
-        res.status(500).send();
+        error.catch(err, res);
     }
 }
 
@@ -153,45 +117,35 @@ exports.delete = async function(req, res)
 {
     try {
         const id = req.params.id;
-        console.log(`Petition resquest view ${id}`);
+        const token = req.get("X-Authorization");
+        console.log(`Petition resquest delete ${id} with ${token}`);
 
-        const petition = await petitions.get(id);
+        const user = await users.getAuth(token, ["userId"]);
+        const petition = await petitions.get(id, "petitionId", ["petitionId", "authorId"]);
 
-        if (petition == null) {
-            console.error("Petition not found");
-            res.status(404).send();
-            return;
+        if (petition.authorId !== user.userId) {
+            throw new error.Forbidden("client tried to delete someone else's petition");
         }
 
-        await petitions.delete(id);
+        await petitions.delete(petition.petitionId);
 
         res.status(200).send();
         console.log("Responded");
     } catch (err) {
-        console.error(err)
-        res.status(500).send();
+        error.catch(err, res);
     }
 }
 
-exports.categories = async function(_, res) 
+exports.viewCategories = async function(_, res) 
 {
     try {
         console.log("Petition request view categories");
-        
-        category = await categories.getAll();
 
-        response = []
-        for (const value of category) {
-            response.push({
-                categoryId: value.category_id,
-                name: value.name
-            });
-        }
+        const category = await categories.getAll();
 
-        res.status(200).send(response);
-        console.log("Responded with", response);
+        res.status(200).send(category);
+        console.log("Responded with", category);
     } catch (err) {
-        console.error(err)
-        res.status(500).send();
+        error.catch(err, res);
     }
 }
