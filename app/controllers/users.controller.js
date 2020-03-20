@@ -1,5 +1,5 @@
 const users = require("../models/users.model");
-const error = require("./error.controller");
+const error = require("../middleware/error.middleware");
 const hash = require("crypto-js");
 
 exports.add = async function(req, res) 
@@ -43,8 +43,7 @@ exports.login = async function(req, res)
             throw new error.BadRequest("Password or email is incorrect");
         }
 
-        const token = hash.MD5(String(Math.random()));
-        //const token = 1337; // test value, i hope its not still here
+        const token = String(hash.MD5(String(Math.random())));
         await users.update(user.userId, { token: token });
 
         user.token = token;
@@ -62,10 +61,7 @@ exports.logout = async function(req, res)
         const token = req.get("X-Authorization");
         console.log("User request logout", token);
 
-        const user = await users.get(token, "token", ["userId"]);
-        if (user == null) {
-            throw new error.Unauthorized("Request is not from an authorised user");
-        }
+        const user = await user.getAuth(token, ["userId"]);
 
         await users.clearFields(user.userId, ["token"]);
 
@@ -108,12 +104,8 @@ exports.update = async function(req, res)
         const token = req.get("X-Authorization");
         console.log(`User request update ${id} with`, body, "and", token);
 
-        if (token == null) {
-            throw new error.Unauthorized("Request is not from an authorised user");
-        }
-
-        const user = await users.get(id, "userId", ["token", "password"]);
-        if (user.token !== token) {
+        const user = await users.getAuth(token, ["userId", "password"]);
+        if (user.userId != id) { //as the returned id is a string
             throw new error.Forbidden("Request tried to edit non-self user");
         }
 

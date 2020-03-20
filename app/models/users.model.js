@@ -1,5 +1,5 @@
 const db = require("../../config/db");
-const helper = require("./helper.model");
+const helper = require("../middleware/sql.middleware");
 
 const nameMap = {
     "userId": "user_id",
@@ -26,6 +26,28 @@ exports.get = async function(queryVal, queryField="userId",
 
     connection.release();
     return value;
+}
+
+exports.getAuth = async function(token, fields=["userId"])
+{
+    if (token == null) {
+        throw new error.Unauthorized("no token was defined");
+    }
+    
+    const connection = await db.getConnection();
+    let [[user], _] = await db.query(connection,
+        helper.genSelect(fields, nameMap) +
+        "From User \
+        Where auth_token = ?",
+        token
+    );
+    connection.release();
+
+    if (user == null) {
+        throw new error.Unauthorized("given token doesn't belong to an authorized user");
+    }
+
+    return user;
 }
 
 /**

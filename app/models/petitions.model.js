@@ -1,6 +1,6 @@
 const db = require("../../config/db");
-const helper = require("./helper.model");
-const error = require("../controllers/error.controller");
+const helper = require("../middleware/sql.middleware");
+const error = require("../middleware/error.middleware");
 
 const nameMap = {
     "authorId": "author_id",

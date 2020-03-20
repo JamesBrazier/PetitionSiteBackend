@@ -51,6 +51,10 @@ exports.InternalError = class InternalError extends Error {
     }
 }
 
+/**
+ * @param {Error} err the error to handle
+ * @param {} res the html response to use to reply
+ */
 exports.catch = function(err, res) 
 {
     switch (err.name) {
