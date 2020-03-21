@@ -28,30 +28,28 @@ exports.set = async function(req, res)
     try {
         const id = parse.number(req.params.id);
         const token = parse.token(req.get("X-Authorization"));
-        let content = req.get("Content-Type");
         console.log("Users.photos request update", id, "with", token);
 
-        if (!["image/png", "image/jpeg", "image/gif"].includes(content)) {
-            throw new error.BadRequest("given content type is not supported");
+        if (!await users.exists(id)) {
+            throw new error.NotFound("no user with given id found");
         }
-        content = content.slice(6); //get the file extention;
 
         const user = await users.getAuth(token, ["userId", "photoFilename"]);
         if (user.userId != id) {
             throw new error.Forbidden("client tried to edit non-self user");
         }
 
-        if (!await users.exists(id)) {
-            throw new error.NotFound("no user with given id found");
+        const filename = await file.saveBody(req, "user_" + user.userId)
+        let status;
+        if (user.photoFilename != null) {
+            await file.deletePhoto(user.photoFilename); //delete the old file
+            status = 200;
+        } else {
+            status = 201;
         }
 
-        const filename = "user_" + user.userId + '.' + content;
-        if (await file.savePhoto(req, filename)) {
-            res.status(200).send();
-        } else {
-            await users.update(id, { photoFilename: filename });
-            res.status(201).send();
-        }
+        await users.update(id, { "photoFilename": filename });
+        res.status(status).send();
         console.log("Responed");
     } catch (err) {
         error.catch(err, res);

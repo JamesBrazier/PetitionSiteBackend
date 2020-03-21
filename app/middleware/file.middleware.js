@@ -3,14 +3,20 @@ const error = require("./error.middleware");
 
 const photoPath = "storage/photos/";
 
-exports.savePhoto = async function(req, filename)
+exports.saveBody = async function(req, filename)
 {
+    let content = req.get("Content-Type");
+
+    if (!["image/png", "image/jpeg", "image/gif"].includes(content)) {
+        throw new error.BadRequest("given content type is not supported");
+    }
+    filename += '.' + content.slice(6); //add the file extention;
+
     const path = photoPath + filename;
-    const replaced = await fs.exists(path);
     
     req.pipe(fs.createWriteStream(path));
 
-    return replaced;
+    return filename;
 }
 
 exports.loadPhoto = async function(filename)

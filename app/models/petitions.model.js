@@ -7,12 +7,13 @@ const nameMap = {
     "authorName": "User.name",
     "authorCity": "User.city",
     "authorCountry": "User.country",
+    "authorPhoto": "User.photo_filename",
     "categoryId": "Petition.category_id",
     "category": "Category.name",
     "closingDate": "closing_date",
     "createdDate": "created_date",
     "petitionId": "Petition.petition_id",
-    "photoFilename": "photo_filename",
+    "photoFilename": "Petition.photo_filename",
     "signatureCount": "COUNT(signatory_id)",
     "signatures": "COUNT(signatory_id)"
 }
