@@ -17,6 +17,21 @@ const nameMap = {
     "signatures": "COUNT(signatory_id)"
 }
 
+exports.exists = async function(id)
+{
+    const connection = await db.getConnection();
+
+    let [[value], _] = await connection.query(
+        "SELECT petition_id \
+        FROM Petition \
+        WHERE petition_id = ?", 
+        id
+    );
+
+    connection.release();
+    return value != null;
+}
+
 /**
  * @description returns the petition with the given id
  * @param {Number} id the petition id
@@ -27,7 +42,7 @@ exports.get = async function(queryVal, queryField="petitionId",
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await db.query(connection,
+    let [[value], _] = await connection.query(
         helper.genSelect(fields, nameMap) +
         "FROM Petition \
             LEFT JOIN Signature \
@@ -53,7 +68,7 @@ exports.getAll = async function(fields=["petitionId", "title", "category", "auth
 {
     const connection = await db.getConnection();
 
-    let [values, _] = await db.query(connection,
+    let [values, _] = await connection.query(
         helper.genSelect(fields, nameMap) +
         "FROM Petition \
             LEFT JOIN Signature \
@@ -62,7 +77,8 @@ exports.getAll = async function(fields=["petitionId", "title", "category", "auth
             ON Petition.category_id = Category.category_id \
             JOIN User \
             ON Petition.author_id = User.user_id \
-        GROUP BY Petition.petition_id"
+        GROUP BY Petition.petition_id \
+        ORDER BY COUNT(signatory_id) DESC"
     );
 
     connection.release();
@@ -122,10 +138,10 @@ exports.search = async function(params={},
     switch (params.sortBy) {
         case undefined:
         case "SIGNATURES_DESC":
-            queryStr += " ORDER BY signatureCount DESC";
+            queryStr += " ORDER BY COUNT(signatory_id) DESC";
             break;
         case "SIGNATURES_ASC":
-            queryStr += " ORDER BY signatureCount ASC";
+            queryStr += " ORDER BY COUNT(signatory_id) ASC";
             break;
         case "ALPHABETICAL_ASC":
             queryStr += " ORDER BY title ASC";
@@ -152,7 +168,7 @@ exports.search = async function(params={},
 
     const connection = await db.getConnection();
 
-    let [values, _] = await db.query(connection, queryStr, queryArgs);
+    let [values, _] = await connection.query(queryStr, queryArgs);
 
     connection.release();
     return values;
@@ -174,7 +190,7 @@ exports.add = async function(values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         "INSERT INTO Petition \
         SET ?",
         helper.mapObject(values, nameMap)
@@ -193,7 +209,7 @@ exports.delete = async function(id)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         "DELETE FROM Petition \
         WHERE petition_id = ?", 
         id
@@ -219,7 +235,7 @@ exports.update = async function(id, values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         "UPDATE Petition SET ? \
         WHERE petition_id = ?",
         [

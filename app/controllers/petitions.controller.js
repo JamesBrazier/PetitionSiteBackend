@@ -2,11 +2,12 @@ const petitions = require("../models/petitions.model");
 const categories = require("../models/categories.model");
 const users = require("../models/users.model");
 const error = require("../middleware/error.middleware");
+const parse = require("../middleware/parse.middleware");
 
 exports.view = async function(req, res) 
 {
     try {
-        const id = req.params.id;
+        const id = parse.number(req.params.id);
         console.log("Petition request view", id);
 
         const petition = await petitions.get(id, "petitionId", [
@@ -32,16 +33,20 @@ exports.search = async function(req, res)
         const query = req.query;
         console.log("Petition request search with", query)
 
-        if (query.startIndex != null) query.startIndex = Number(query.startIndex);
-        if (query.count != null) query.count = Number(query.count);
+        if (query.startIndex != null) query.startIndex = parse.number(query.startIndex);
+        if (query.count != null) query.count = parse.number(query.count);
 
         if (query.categoryId != null) {
-            query.categoryId = Number(query.categoryId);
-            await categories.get(query.categoryId);
+            query.categoryId = parse.number(query.categoryId);
+            if (!await categories.exists(query.categoryId)) {
+                throw new error.BadRequest("invalid category id");
+            }
         }
         if (query.authorId != null) {
-            query.authorId = Number(query.authorId);
-            await users.get(query.authorId);
+            query.authorId = parse.number(query.authorId);
+            if (!await users.exists(query.authorId)) {
+                throw new error.BadRequest("no user with id found");
+            }
         }
 
         const matched = await petitions.search(query, 
@@ -59,7 +64,7 @@ exports.add = async function(req, res)
 {
     try {
         const data = req.body;
-        const token = req.get("X-Authorization");
+        const token = parse.token(req.get("X-Authorization"));
         console.log("Petition request add", data, "with", token);
 
         const user = await users.getAuth(token, ["userId"]);
@@ -69,7 +74,7 @@ exports.add = async function(req, res)
         if (data.closingDate != null && new Date(data.closingDate) <= data.createdDate) {
             throw new error.BadRequest("Closing date is not in the future");
         }
-        if (await categories.get(data.categoryId) == null) {
+        if (!await categories.exists(data.categoryId)) {
             throw new error.BadRequest("category is invalid");
         }
 
@@ -85,13 +90,13 @@ exports.add = async function(req, res)
 exports.update = async function(req, res) 
 {
     try {
-        const id = req.params.id;
-        const token = req.get("X-Authorization");
+        const id = parse.number(req.params.id);
+        const token = parse.token(req.get("X-Authorization"));
         const data = req.body;
         console.log(`Petition request update ${id} with`, data, "and", token);
 
         const user = await users.getAuth(token, ["userId"]);
-        const petition = await petitions.get(id, "petitionId", ["petitionId", "authorId"]);
+        const petition = await petitions.get(id, "petitionId", ["authorId"]);
         if (petition == null) {
             throw new error.NotFound("no petition with given id found");
         }
@@ -107,11 +112,11 @@ exports.update = async function(req, res)
         if (data.closingDate != null && new Date(data.closingDate) <= currentDate) {
             throw new error.BadRequest("Closing date is not in the future");
         }
-        if (data.categoryId != null && await categories.get(data.categoryId) == null) {
+        if (data.categoryId != null && !await categories.exists(data.categoryId)) {
             throw new error.BadRequest("category is invalid");
         }
 
-        await petitions.update(petition.petitionId, data);
+        await petitions.update(id, data);
 
         res.status(200).send();
         console.log("Responded")
@@ -123,12 +128,12 @@ exports.update = async function(req, res)
 exports.delete = async function(req, res) 
 {
     try {
-        const id = req.params.id;
-        const token = req.get("X-Authorization");
+        const id = parse.number(req.params.id);
+        const token = parse.token(req.get("X-Authorization"));
         console.log(`Petition resquest delete ${id} with ${token}`);
 
         const user = await users.getAuth(token, ["userId"]);
-        const petition = await petitions.get(id, "petitionId", ["petitionId", "authorId"]);
+        const petition = await petitions.get(id, "petitionId", ["authorId"]);
         if (petition == null) {
             throw new error.NotFound("no petition with given id found");
         }
@@ -137,7 +142,7 @@ exports.delete = async function(req, res)
             throw new error.Forbidden("client tried to delete someone else's petition");
         }
 
-        await petitions.delete(petition.petitionId);
+        await petitions.delete(id);
 
         res.status(200).send();
         console.log("Responded");

@@ -6,6 +6,21 @@ const nameMap = {
     "categoryId": "category_id"
 }
 
+exports.exists = async function(id)
+{
+    const connection = await db.getConnection();
+
+    let [[value], _] = await connection.query(
+        "SELECT category_id \
+        FROM Category \
+        WHERE category_id = ?",
+        id
+    );
+
+    connection.release();
+    return value != null;
+}
+
 /**
  * @description returns the category with the given id
  * @param {Number} id the category id
@@ -15,7 +30,7 @@ exports.get = async function(queryVal, queryField="categoryId", fields=["categor
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await db.query(connection,
+    let [[value], _] = await connection.query(
         helper.genSelect(fields, nameMap) +
         "FROM Category \
         WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
@@ -34,7 +49,7 @@ exports.getAll = async function(fields=["categoryId", "name"])
 {
     const connection = await db.getConnection();
 
-    let [values, _] = await db.query(connection,
+    let [values, _] = await connection.query(
         helper.genSelect(fields, nameMap) + 
         "FROM Category"
     );

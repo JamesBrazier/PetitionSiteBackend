@@ -19,19 +19,7 @@ exports.getPool = function () {
     return pool;
 };
 
-exports.getConnection = function() {
-    try {
-        return pool.getConnection();
-    } catch (err) { 
-        throw new error.InternalError(err.message); 
-    }
-}
-
-exports.query = function(connection, str, values=undefined) {
-    try {
-        console.log("\nQuery sent:", str, values, '\n');
-        return connection.query(str, values);
-    } catch (err) { 
-        throw new error.BadRequest(err.message); 
-    }
+exports.getConnection = function() 
+{
+    return pool.getConnection();
 }

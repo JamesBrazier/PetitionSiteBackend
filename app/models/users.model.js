@@ -8,6 +8,21 @@ const nameMap = {
     "token": "auth_token"
 }
 
+exports.exists = async function(id)
+{
+    const connection = await db.getConnection();
+
+    let [[value], _] = await connection.query(
+        "SELECT user_id \
+        FROM User \
+        WHERE user_id = ?", 
+        id
+    );
+
+    connection.release();
+    return value != null;
+}
+
 /**
  * @description returns the user with the given id
  * @param {Number} id the user id
@@ -18,7 +33,7 @@ exports.get = async function(queryVal, queryField="userId",
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await db.query(connection,
+    let [[value], _] = await connection.query(
         helper.genSelect(fields, nameMap) +
         "FROM User \
         WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
@@ -30,18 +45,16 @@ exports.get = async function(queryVal, queryField="userId",
 }
 
 exports.getAuth = async function(token, fields=["userId"])
-{
-    if (token == null) {
-        throw new error.Unauthorized("no token was defined");
-    }
-    
+{    
     const connection = await db.getConnection();
-    let [[user], _] = await db.query(connection,
+
+    let [[user], _] = await connection.query(
         helper.genSelect(fields, nameMap) +
         "From User \
         Where auth_token = ?",
         token
     );
+    
     connection.release();
 
     if (user == null) {
@@ -59,7 +72,7 @@ exports.getAll = async function(fields=["userId", "name", "city", "country", "em
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         helper.genSelect(fields, nameMap) + 
         "FROM User"
     );
@@ -81,7 +94,7 @@ exports.add = async function(values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         "INSERT INTO User \
         SET ?", 
         [values]
@@ -107,7 +120,7 @@ exports.update = async function(id, values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         "UPDATE User \
         SET ? \
         WHERE user_id = ?", 
@@ -125,7 +138,7 @@ exports.clearFields = async function(id, fields)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection, 
+    let [value, _] = await connection.query( 
         "UPDATE User "
         + helper.genSetNull(fields, nameMap) +
         "WHERE user_id = ?",

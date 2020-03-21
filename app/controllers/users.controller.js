@@ -1,5 +1,6 @@
 const users = require("../models/users.model");
 const error = require("../middleware/error.middleware");
+const parse = require("../middleware/parse.middleware");
 const hash = require("crypto-js");
 
 exports.add = async function(req, res) 
@@ -8,13 +9,16 @@ exports.add = async function(req, res)
         let body = req.body;
         console.log("User request add", body);
 
-        if (body.name == null || body.name.length < 1) {
+        if (body.name == null || body.name == 0) {
             throw new error.BadRequest("No name was included");
         }
         if (body.email == null || !body.email.includes('@')) {
             throw new error.BadRequest("Email not valid");
         }
-        if (body.password == null || body.password.length < 1) {
+        if (await users.get(body.email, "email", ["email"]) != null) {
+            throw new error.BadRequest("a user already uses the given email");
+        }
+        if (body.password == null || body.password == 0) {
             throw new error.BadRequest("Password is empty");
         } //else {
         //    body.password = hash.SHA256(body.password);
@@ -58,7 +62,7 @@ exports.login = async function(req, res)
 exports.logout = async function(req, res) 
 {
     try {
-        const token = req.get("X-Authorization");
+        const token = parse.token(req.get("X-Authorization"));
         console.log("User request logout", token);
 
         const user = await users.getAuth(token, ["userId"]);
@@ -75,8 +79,8 @@ exports.logout = async function(req, res)
 exports.get = async function(req, res) 
 {
     try {
-        const id = req.params.id;
-        const token = req.get("X-Authorization");
+        const id = parse.number(req.params.id);
+        const token = parse.token(req.get("X-Authorization"));
         console.log(`User request view ${id} with ${token}`)
 
         const user = await users.get(id, "userId", ["name", "city", "country", "email", "token"]);
@@ -100,8 +104,8 @@ exports.update = async function(req, res)
 {
     try {
         const body = req.body;
-        const id = req.params.id;
-        const token = req.get("X-Authorization");
+        const id = parse.number(req.params.id);
+        const token = parse.token(req.get("X-Authorization"));
         console.log(`User request update ${id} with`, body, "and", token);
 
         const user = await users.getAuth(token, ["userId", "password"]);
@@ -116,7 +120,7 @@ exports.update = async function(req, res)
             throw new error.BadRequest("Email is not valid");
         }
         if (body.password != null) {
-            if (body.password.length < 1) {
+            if (body.password == 0) {
                 throw new error.BadRequest("New password is not valid");
             }
             if (body.currentPassword == null || body.currentPassword !== user.password) {

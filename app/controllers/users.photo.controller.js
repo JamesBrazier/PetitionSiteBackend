@@ -1,11 +1,12 @@
 const users = require("../models/users.model");
 const error = require("../middleware/error.middleware");
 const file = require("../middleware/file.middleware");
+const parse = require("../middleware/parse.middleware");
 
 exports.get = async function(req, res) 
 {
     try {
-        const id = req.params.id;
+        const id = parse.number(req.params.id);
         console.log("Users.photo request view", id);
 
         const user = await users.get(id, "userId", ["photoFilename"]);
@@ -16,7 +17,7 @@ exports.get = async function(req, res)
         const image = await file.loadPhoto(user.photoFilename);
 
         res.status(200).contentType(image.type).send(image.data);
-        console.log("Responeded with", user.photoFilename);
+        console.log("Responded with", user.photoFilename);
     } catch (err) {
         error.catch(err, res);
     }
@@ -25,10 +26,9 @@ exports.get = async function(req, res)
 exports.set = async function(req, res) 
 {
     try {
-        const id = req.params.id;
-        const token = req.get("X-Authorization");
+        const id = parse.number(req.params.id);
+        const token = parse.token(req.get("X-Authorization"));
         let content = req.get("Content-Type");
-        const image = req.body;
         console.log("Users.photos request update", id, "with", token);
 
         if (!["image/png", "image/jpeg", "image/gif"].includes(content)) {
@@ -41,15 +41,15 @@ exports.set = async function(req, res)
             throw new error.Forbidden("client tried to edit non-self user");
         }
 
-        if (await users.get(id ["userId"], ["userId"]) == null) {
+        if (!await users.exists(id)) {
             throw new error.NotFound("no user with given id found");
         }
 
         const filename = "user_" + user.userId + '.' + content;
-        if (await file.savePhoto(image, filename)) {
+        if (await file.savePhoto(req, filename)) {
             res.status(200).send();
         } else {
-            await users.update(id, {photoFilename: filename});
+            await users.update(id, { photoFilename: filename });
             res.status(201).send();
         }
         console.log("Responed");
@@ -61,9 +61,13 @@ exports.set = async function(req, res)
 exports.delete = async function(req, res) 
 {
     try {
-        const id = req.params.id;
-        const token = req.get("X-Authorization");
+        const id = parse.number(req.params.id);
+        const token = parse.token(req.get("X-Authorization"));
         console.log("Users.photos request delete", id, "with", token);
+
+        if (!await users.exists(id)) {
+            throw new error.NotFound("no user with given id found");
+        }
 
         const user = await users.getAuth(token, ["userId", "photoFilename"]);
         if (user.userId != id) {

@@ -3,13 +3,12 @@ const error = require("./error.middleware");
 
 const photoPath = "storage/photos/";
 
-exports.savePhoto = async function(image, filename)
+exports.savePhoto = async function(req, filename)
 {
-    console.log(image, filename)
     const path = photoPath + filename;
     const replaced = await fs.exists(path);
     
-    await fs.writeFile(path, image);
+    req.pipe(fs.createWriteStream(path));
 
     return replaced;
 }

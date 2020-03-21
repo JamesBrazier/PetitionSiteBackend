@@ -4,7 +4,27 @@ const helper = require("../middleware/sql.middleware");
 const nameMap = {
     "petitionId": "petition_id",
     "userId": "signatory_id",
-    "signatoryId": "signatory_id"
+    "name": "User.name",
+    "city": "User.city",
+    "country": "User.country",
+    "signatoryId": "signatory_id",
+    "signedDate": "signed_date"
+}
+
+exports.exists = async function(id, userId)
+{
+    const connection = await db.getConnection();
+
+    let [[value], _] = await connection.query(
+        "SELECT signed_date \
+        FROM Signature \
+        WHERE petition_id = ? \
+            AND signatory_id = ?",
+        [ id, userId ]
+    );
+
+    connection.release();
+    return value != null;
 }
 
 /**
@@ -16,10 +36,13 @@ exports.get = async function(queryVal, queryField="petitionId", fields=["petitio
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         helper.genSelect(fields, nameMap) +
         "FROM Signature \
-        WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
+            JOIN User \
+            ON signatory_id = user_id \
+        WHERE " + helper.mapName(queryField, nameMap) + " = ? \
+        ORDER BY signed_Date ASC", 
         queryVal
     );
 
@@ -33,17 +56,17 @@ exports.get = async function(queryVal, queryField="petitionId", fields=["petitio
  * @param {Number} userId the id of the user
  * @returns details of the addition
  */
-exports.add = async function(petitionId, userId) 
+exports.add = async function(petitionId, userId, date) 
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         "INSERT INTO Signature \
         SET ?", 
         {
             petition_id: petitionId,
             signatory_id: userId,
-            signed_date: new Date()
+            signed_date: date
         }
     );
 
@@ -61,7 +84,7 @@ exports.delete = async function(petitionId, userId)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await db.query(connection,
+    let [value, _] = await connection.query(
         "DELETE FROM Signature \
         WHERE petition_id = ? \
             AND signatory_id = ?", 
