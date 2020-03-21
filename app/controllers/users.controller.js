@@ -80,7 +80,7 @@ exports.get = async function(req, res)
 {
     try {
         const id = parse.number(req.params.id);
-        const token = parse.token(req.get("X-Authorization"));
+        const token = req.get("X-Authorization");
         console.log(`User request view ${id} with ${token}`)
 
         const user = await users.get(id, "userId", ["name", "city", "country", "email", "token"]);

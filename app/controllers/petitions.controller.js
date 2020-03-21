@@ -70,8 +70,8 @@ exports.add = async function(req, res)
         const user = await users.getAuth(token, ["userId"]);
         data.authorId = user.userId;
 
-        if (data.title == null) {
-            throw new BadRequest("not title was given");
+        if (data == null || data.title == null) {
+            throw new BadRequest("no title was given");
         }
         data.createdDate = new Date();
         if (data.closingDate != null && new Date(data.closingDate) <= data.createdDate) {
