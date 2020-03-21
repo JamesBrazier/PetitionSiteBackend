@@ -71,7 +71,7 @@ exports.add = async function(req, res)
         data.authorId = user.userId;
 
         if (data == null || data.title == null) {
-            throw new BadRequest("no title was given");
+            throw new error.BadRequest("no title was given");
         }
         data.createdDate = new Date();
         if (data.closingDate != null && new Date(data.closingDate) <= data.createdDate) {

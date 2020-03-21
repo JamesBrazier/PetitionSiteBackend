@@ -1,5 +1,4 @@
 const mysql = require('mysql2/promise');
-const error = require("../app/middleware/error.middleware");
 
 let pool = null;
 
