@@ -70,6 +70,9 @@ exports.add = async function(req, res)
         const user = await users.getAuth(token, ["userId"]);
         data.authorId = user.userId;
 
+        if (data.title == null) {
+            throw new BadRequest("not title was given");
+        }
         data.createdDate = new Date();
         if (data.closingDate != null && new Date(data.closingDate) <= data.createdDate) {
             throw new error.BadRequest("Closing date is not in the future");

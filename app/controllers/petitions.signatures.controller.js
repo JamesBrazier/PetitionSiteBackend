@@ -48,7 +48,7 @@ exports.add = async function(req, res)
 
         await signatures.add(id, user.userId, currentDate);
 
-        res.status(200).send();
+        res.status(201).send();
         console.log("Responded");
     } catch (err) {
         error.catch(err, res);
