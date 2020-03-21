@@ -11,7 +11,7 @@ exports.get = async function(req, res)
         console.log("Petition.photo request view", id);
 
         const petition = await petitions.get(id, "petitionId", ["photoFilename"]);
-        if (petitions == null) {
+        if (petition == null) {
             throw new error.NotFound("no petition with id found");
         }
 
