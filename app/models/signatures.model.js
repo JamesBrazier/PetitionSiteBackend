@@ -11,6 +11,12 @@ const nameMap = {
     "signedDate": "signed_date"
 }
 
+/**
+ * @description returns true if a signature for the given petition with the given signatory exists
+ * @param {Number} id the id of the petition to check
+ * @param {Number} userId the id of the user to check
+ * @returns {Boolean} true if the signature exists
+ */
 exports.exists = async function(id, userId)
 {
     const connection = await db.getConnection();
@@ -33,9 +39,11 @@ exports.exists = async function(id, userId)
 }
 
 /**
- * @description returns all of the signatures associated with the given petition
- * @param {Number} petID the id of the Petition
- * @returns a list of the signatures the petition has
+ * @description returns the signature(s) with the given value as the query field
+ * @param queryVal the value to query
+ * @param {String} queryField the field to query
+ * @param {Array<String>} fields the fields to return
+ * @returns {Array<Object>} the signtures fields
  */
 exports.get = async function(queryVal, queryField="petitionId", fields=["petitionId", "userId"])
 {
@@ -43,7 +51,7 @@ exports.get = async function(queryVal, queryField="petitionId", fields=["petitio
 
     try {
         let [value, _] = await connection.query(
-            helper.genSelect(fields, nameMap) +
+            helper.genSelect(fields, nameMap) + //create a select statement from the given fields
             "FROM Signature \
                 JOIN User \
                 ON signatory_id = user_id \
@@ -64,7 +72,8 @@ exports.get = async function(queryVal, queryField="petitionId", fields=["petitio
  * @description add the given users signature to the petition
  * @param {Number} petitionId the id of the petition
  * @param {Number} userId the id of the user
- * @returns details of the addition
+ * @param {Date} date the date of the signing
+ * @returns {Object} details of the addition
  */
 exports.add = async function(petitionId, userId, date) 
 {
@@ -93,7 +102,7 @@ exports.add = async function(petitionId, userId, date)
  * @description deletes the given users signature off the given petition
  * @param {Number} petitionId the id of the petition
  * @param {Number} userId the id of the user to remove
- * @returns details of the deletion
+ * @returns {Object} details of the deletion
  */
 exports.delete = async function(petitionId, userId)
 {

@@ -1,11 +1,12 @@
 /**
  * @description generates a select statement from the given fields and alias map
  * @param {Array<String>} fields the list of field names
- * @param {object} nameMap the field name alias map
+ * @param {Object} nameMap the field name alias map
+ * @returns {String} the generated select statement
  */
 exports.genSelect = function(fields, nameMap={}) 
 {
-    function get(i) {
+    function get(i) { //if the object is in the nameMap replace the field with an alias
         if (nameMap[fields[i]] != undefined) {
             return nameMap[fields[i]] + " AS " + fields[i];
         } else {
@@ -16,7 +17,6 @@ exports.genSelect = function(fields, nameMap={})
     let query;
 
     query = "SELECT " + get(0);
-
     for (let i = 1; i < fields.length; ++i) {
         query += ", " + get(i);
     }
@@ -24,6 +24,12 @@ exports.genSelect = function(fields, nameMap={})
     return query + '\n';
 }
 
+/**
+ * @description returns the name or alias if in the map
+ * @param {String} name
+ * @param {Object} nameMap the field name alias map
+ * @returns the name or alias if in the map
+ */
 exports.mapName = function(name, nameMap) 
 {
     if (nameMap[name] != undefined) {
@@ -33,6 +39,12 @@ exports.mapName = function(name, nameMap)
     }
 }
 
+/**
+ * @description generates a set = NULL statement from the given fields and alias map
+ * @param {Array<String>} fields the list of field names
+ * @param {Object} nameMap the field name alias map
+ * @returns {String} the generated select statement
+ */
 exports.genSetNull = function(fields, nameMap={})
 {
     function get(i) {
@@ -54,9 +66,10 @@ exports.genSetNull = function(fields, nameMap={})
 }
 
 /**
- * @description creates a new object where the fields with the aliases in the map are resplaced
- * @param {object} obj the object to map
- * @param {object} nameMap the field name alias map
+ * @description creates a new object where the fields with the aliases in the map are replaced
+ * @param {Object} obj the object to map
+ * @param {Object} nameMap the field name alias map
+ * @returns the object with the aliases instead
  */
 exports.mapObject = function(obj, nameMap={}) 
 {

@@ -8,6 +8,11 @@ const nameMap = {
     "token": "auth_token"
 }
 
+/**
+ * @description returns true if a user with the given id exsits
+ * @param {Number} id the id of the user to check
+ * @returns {Boolean} true if the user exists
+ */
 exports.exists = async function(id)
 {
     const connection = await db.getConnection();
@@ -29,9 +34,11 @@ exports.exists = async function(id)
 }
 
 /**
- * @description returns the user with the given id
- * @param {Number} id the user id
- * @returns the user details
+ * @description returns the user with the given value as the query field
+ * @param queryVal the unique value to query
+ * @param {String} queryField the field to query
+ * @param {Array<String>} fields the fields to return
+ * @returns {Object} the user fields
  */
 exports.get = async function(queryVal, queryField="userId", 
     fields=["userId", "name", "city", "country", "email"]) 
@@ -54,6 +61,13 @@ exports.get = async function(queryVal, queryField="userId",
     }
 }
 
+/**
+ * @description returns the user with the given token
+ * @param {String} queryField the token to query
+ * @param {Array<String>} fields the fields to return
+ * @throws error.Unauthorized if the token doesn't belong to any user
+ * @returns {Object} the user fields
+ */
 exports.getAuth = async function(token, fields=["userId"])
 {    
     const connection = await db.getConnection();
@@ -81,7 +95,8 @@ exports.getAuth = async function(token, fields=["userId"])
 
 /**
  * @description returns all the users in the database
- * @returns a list of all the users
+ * @param {Array<String>} fields the fields to return
+ * @returns {Array<Object>} a list of all the users fields
  */
 exports.getAll = async function(fields=["userId", "name", "city", "country", "email"]) 
 {
@@ -109,7 +124,7 @@ exports.getAll = async function(fields=["userId", "name", "city", "country", "em
  * @param {Number} values.password the user password (required)
  * @param {String} values.city the user home city (optional)
  * @param {String} values.country the users home country (optional)
- * @return details about the addition
+ * @return {Object} details about the addition
  */
 exports.add = async function(values) 
 {
@@ -140,7 +155,7 @@ exports.add = async function(values)
  * @param {String} values.city the user home city
  * @param {String} values.country the users home country
  * @param {Number} values.token the users auth token
- * @return details about the change
+ * @return {Object} details about the change
  */
 exports.update = async function(id, values) 
 {
@@ -165,14 +180,20 @@ exports.update = async function(id, values)
     }
 }
 
-exports.clearFields = async function(id, fields)
+/**
+ * @description sets the given fields for the user to NULL
+ * @param {Number} id the user id
+ * @param {Array<String>} the fields to set to NULL
+ * @return {Object} details about the change
+ */
+exports.clearFields = async function(id, fields=[])
 {
     const connection = await db.getConnection();
 
     try {
         let [value, _] = await connection.query( 
             "UPDATE User "
-            + helper.genSetNull(fields, nameMap) +
+            + helper.genSetNull(fields, nameMap) + //creates a list of fields to set to NULL
             "WHERE user_id = ?",
             id
         );

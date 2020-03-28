@@ -6,6 +6,11 @@ const nameMap = {
     "categoryId": "category_id"
 }
 
+/**
+ * @description returns true if a category with the given id exists
+ * @param {Number} id the id to check
+ * @returns {Boolean} true if the category exists
+ */
 exports.exists = async function(id)
 {
     const connection = await db.getConnection();
@@ -27,9 +32,11 @@ exports.exists = async function(id)
 }
 
 /**
- * @description returns the category with the given id
- * @param {Number} id the category id
- * @returns the category details
+ * @description returns the category with the given value as the query field
+ * @param queryVal the unique value to query
+ * @param {String} queryField the field to query
+ * @param {Array<String>} fields the fields to return
+ * @returns {Object} the category fields
  */
 exports.get = async function(queryVal, queryField="categoryId", fields=["categoryId", "name"]) 
 {
@@ -37,7 +44,7 @@ exports.get = async function(queryVal, queryField="categoryId", fields=["categor
 
     try {
         let [[value], _] = await connection.query(
-            helper.genSelect(fields, nameMap) +
+            helper.genSelect(fields, nameMap) + //create a select statement from the given fields
             "FROM Category \
             WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
             queryVal
@@ -45,7 +52,7 @@ exports.get = async function(queryVal, queryField="categoryId", fields=["categor
 
         connection.release();
         return value;
-    } catch (err) {
+    } catch (err) { //if an error occurs we still need to release the connection
         connection.release();
         throw err;
     }
@@ -53,7 +60,8 @@ exports.get = async function(queryVal, queryField="categoryId", fields=["categor
 
 /**
  * @description returns all the categories in the database
- * @returns a list of the categories
+ * @param {Array<String>} fields the fields to return
+ * @returns {Array<Object>} a list of the categories fields
  */
 exports.getAll = async function(fields=["categoryId", "name"])
 {

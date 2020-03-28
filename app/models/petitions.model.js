@@ -18,6 +18,11 @@ const nameMap = {
     "signatures": "COUNT(signatory_id)"
 }
 
+/**
+ * @description returns true if a petition with the given id exists
+ * @param {Number} id the id to check
+ * @returns {Boolean} true if the petition exists
+ */
 exports.exists = async function(id)
 {
     const connection = await db.getConnection();
@@ -39,9 +44,11 @@ exports.exists = async function(id)
 }
 
 /**
- * @description returns the petition with the given id
- * @param {Number} id the petition id
- * @returns the petition's details
+ * @description returns the petition with the given value as the query field
+ * @param queryVal the unique value to query
+ * @param {String} queryField the field to query
+ * @param {Array<String>} fields the fields to return
+ * @returns {Object} the petition fields
  */
 exports.get = async function(queryVal, queryField="petitionId", 
     fields=["petitionId", "title", "category", "authorId", "signatures"])
@@ -50,7 +57,7 @@ exports.get = async function(queryVal, queryField="petitionId",
 
     try {
         let [[value], _] = await connection.query(
-            helper.genSelect(fields, nameMap) +
+            helper.genSelect(fields, nameMap) + //create a select statement from the given fields
             "FROM Petition \
                 LEFT JOIN Signature \
                 ON Petition.petition_id = Signature.petition_id \
@@ -65,15 +72,16 @@ exports.get = async function(queryVal, queryField="petitionId",
 
         connection.release();
         return value;
-    } catch (err) {
+    } catch (err) { //if an error occurs we still need to release the connection
         connection.release();
         throw err;
     }
 }
 
 /**
- * @description returns all the petitions is the database
- * @returns a list of the petitions
+ * @description returns all the petitions in the database
+ * @param {Array<String>} fields the fields to return
+ * @returns {Array<Object>} a list of the petitions fields
  */
 exports.getAll = async function(fields=["petitionId", "title", "category", "authorId", "signatures"])
 {
@@ -103,7 +111,7 @@ exports.getAll = async function(fields=["petitionId", "title", "category", "auth
 
 /**
  * @description searches the petitions in the databse and returns those which fit the search params
- * @param {object} params the query parameters with the given possible fields
+ * @param {Object} params the query parameters with the given possible fields
  * @param {Number} params.startIndex the number of items to skip before returning results
  * @param {Number} params.count the number of items to include in result
  * @param {String} params.q include only items that include this in their title
@@ -111,7 +119,8 @@ exports.getAll = async function(fields=["petitionId", "title", "category", "auth
  * @param {Number} params.authorId include only items authored by the given user id
  * @param {String} params.sortBy sort returned items in the given way 
  * (values are: ALPHABETICAL_ASC, ALPHABETICAL_DESC, SIGNATURES_ASC, SIGNATURES_DESC)
- * @returns the items that match the given parameters
+ * @param {Array<String>} fields the fields to return
+ * @returns {Object} the items that match the given parameters
  */
 exports.search = async function(params={}, 
     fields=["petitionId", "title", "category", "authorId", "signatures"])
@@ -197,7 +206,7 @@ exports.search = async function(params={},
 
 /**
  * @description adds a new petition to the database
- * @param {object} values an object with the given possible fields
+ * @param {Object} values an object with the given possible fields
  * @param {String} values.title the title of the petition (required)
  * @param {String} values.description the description of the petition (required)
  * @param {Number} values.authorId the id of the user who created the petition (required)

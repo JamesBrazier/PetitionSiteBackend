@@ -4,17 +4,22 @@ const users = require("../models/users.model");
 const error = require("../middleware/error.middleware");
 const parse = require("../middleware/parse.middleware");
 
+/**
+ * @description sends information about the users who have signed the petition
+ * @param {Request} req the client's request
+ * @param {Response} res the server's response to send
+ */
 exports.get = async function(req, res)
 {
     try {
-        const id = parse.number(req.params.id);
+        const id = parse.number(req.params.id); //ensure the id is a valid number
         console.log("Petitions.signatures request view", id);
 
         if (!await petitions.exists(id)) {
             throw new error.NotFound("no petition with id found");
         }
 
-        const signature = await signatures.get(id, "petitionId", 
+        const signature = await signatures.get(id, "petitionId", // get the given fields from the signature
             ["signatoryId", "name", "city", "country", "signedDate"]
         );
 
@@ -25,14 +30,20 @@ exports.get = async function(req, res)
     }
 }
 
+/**
+ * @description adds the authorized user to the petition's signatures,
+ * users can only sign a petition they haven't already
+ * @param {Request} req the client's request
+ * @param {Response} res the server's response to send
+ */
 exports.add = async function(req, res)
 {
     try {
         const id = parse.number(req.params.id);
-        const token = parse.token(req.get("X-Authorization"));
+        const token = parse.token(req.get("X-Authorization")); //ensure the token is valid
         console.log("Petitions.signatures request add", id, "with", token);
 
-        const user = await users.getAuth(token, ["userId"]);
+        const user = await users.getAuth(token, ["userId"]); //get the user with the token
         const petition = await petitions.get(id, "petitionId", ["closingDate"]);
         if (petition == null) {
             throw new error.NotFound("no petition with id found");
@@ -55,6 +66,13 @@ exports.add = async function(req, res)
     }
 }
 
+/**
+ * @description removes the users signature from the given petition,
+ * users can only remove their signature from other users petitions,
+ * and of course, a petition they signed
+ * @param {Request} req the client's request
+ * @param {Response} res the server's response to send
+ */
 exports.delete = async function(req, res)
 {
     try {
