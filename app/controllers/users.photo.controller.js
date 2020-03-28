@@ -39,7 +39,7 @@ exports.set = async function(req, res)
             throw new error.Forbidden("client tried to edit non-self user");
         }
 
-        const filename = await file.saveBody(req, "user_" + user.userId)
+        const filename = await file.saveBodyPhoto(req, "user_" + user.userId)
         let status;
         if (user.photoFilename != null) {
             await file.deletePhoto(user.photoFilename); //delete the old file

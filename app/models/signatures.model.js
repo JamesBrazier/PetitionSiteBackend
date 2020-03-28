@@ -15,16 +15,21 @@ exports.exists = async function(id, userId)
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
-        "SELECT signed_date \
-        FROM Signature \
-        WHERE petition_id = ? \
-            AND signatory_id = ?",
-        [ id, userId ]
-    );
+    try {
+        let [[value], _] = await connection.query(
+            "SELECT signed_date \
+            FROM Signature \
+            WHERE petition_id = ? \
+                AND signatory_id = ?",
+            [ id, userId ]
+        );
 
-    connection.release();
-    return value != null;
+        connection.release();
+        return value != null;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -36,18 +41,23 @@ exports.get = async function(queryVal, queryField="petitionId", fields=["petitio
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        helper.genSelect(fields, nameMap) +
-        "FROM Signature \
-            JOIN User \
-            ON signatory_id = user_id \
-        WHERE " + helper.mapName(queryField, nameMap) + " = ? \
-        ORDER BY signed_Date ASC", 
-        queryVal
-    );
+    try {
+        let [value, _] = await connection.query(
+            helper.genSelect(fields, nameMap) +
+            "FROM Signature \
+                JOIN User \
+                ON signatory_id = user_id \
+            WHERE " + helper.mapName(queryField, nameMap) + " = ? \
+            ORDER BY signed_Date ASC", 
+            queryVal
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -60,18 +70,23 @@ exports.add = async function(petitionId, userId, date)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        "INSERT INTO Signature \
-        SET ?", 
-        {
-            petition_id: petitionId,
-            signatory_id: userId,
-            signed_date: date
-        }
-    );
+    try {
+        let [value, _] = await connection.query(
+            "INSERT INTO Signature \
+            SET ?", 
+            {
+                petition_id: petitionId,
+                signatory_id: userId,
+                signed_date: date
+            }
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -84,16 +99,21 @@ exports.delete = async function(petitionId, userId)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        "DELETE FROM Signature \
-        WHERE petition_id = ? \
-            AND signatory_id = ?", 
-        [
-            petitionId, 
-            userId
-        ]
-    );
+    try {
+        let [value, _] = await connection.query(
+            "DELETE FROM Signature \
+            WHERE petition_id = ? \
+                AND signatory_id = ?", 
+            [
+                petitionId, 
+                userId
+            ]
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }

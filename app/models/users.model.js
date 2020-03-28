@@ -12,15 +12,20 @@ exports.exists = async function(id)
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
-        "SELECT user_id \
-        FROM User \
-        WHERE user_id = ?", 
-        id
-    );
+    try {
+        let [[value], _] = await connection.query(
+            "SELECT user_id \
+            FROM User \
+            WHERE user_id = ?", 
+            id
+        );
 
-    connection.release();
-    return value != null;
+        connection.release();
+        return value != null;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -33,29 +38,39 @@ exports.get = async function(queryVal, queryField="userId",
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
-        helper.genSelect(fields, nameMap) +
-        "FROM User \
-        WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
-        queryVal
-    );
+    try {
+        let [[value], _] = await connection.query(
+            helper.genSelect(fields, nameMap) +
+            "FROM User \
+            WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
+            queryVal
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 exports.getAuth = async function(token, fields=["userId"])
 {    
     const connection = await db.getConnection();
 
-    let [[user], _] = await connection.query(
-        helper.genSelect(fields, nameMap) +
-        "From User \
-        Where auth_token = ?",
-        token
-    );
-    
-    connection.release();
+    try {
+        var [[user], _] = await connection.query(
+            helper.genSelect(fields, nameMap) +
+            "From User \
+            Where auth_token = ?",
+            token
+        );
+        
+        connection.release();
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 
     if (user == null) {
         throw new error.Unauthorized("given token doesn't belong to an authorized user");
@@ -72,12 +87,18 @@ exports.getAll = async function(fields=["userId", "name", "city", "country", "em
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        helper.genSelect(fields, nameMap) + 
-        "FROM User"
-    );
+    try {
+        let [value, _] = await connection.query(
+            helper.genSelect(fields, nameMap) + 
+            "FROM User"
+        );
 
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -94,14 +115,19 @@ exports.add = async function(values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        "INSERT INTO User \
-        SET ?", 
-        [values]
-    );
+    try {
+        let [value, _] = await connection.query(
+            "INSERT INTO User \
+            SET ?", 
+            [values]
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -120,31 +146,41 @@ exports.update = async function(id, values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        "UPDATE User \
-        SET ? \
-        WHERE user_id = ?", 
-        [
-            helper.mapObject(values, nameMap),
-            id
-        ]
-    );
+    try {
+        let [value, _] = await connection.query(
+            "UPDATE User \
+            SET ? \
+            WHERE user_id = ?", 
+            [
+                helper.mapObject(values, nameMap),
+                id
+            ]
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 exports.clearFields = async function(id, fields)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query( 
-        "UPDATE User "
-        + helper.genSetNull(fields, nameMap) +
-        "WHERE user_id = ?",
-        id
-    );
+    try {
+        let [value, _] = await connection.query( 
+            "UPDATE User "
+            + helper.genSetNull(fields, nameMap) +
+            "WHERE user_id = ?",
+            id
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }

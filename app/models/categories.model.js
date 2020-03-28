@@ -10,15 +10,20 @@ exports.exists = async function(id)
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
-        "SELECT category_id \
-        FROM Category \
-        WHERE category_id = ?",
-        id
-    );
+    try {
+        let [[value], _] = await connection.query(
+            "SELECT category_id \
+            FROM Category \
+            WHERE category_id = ?",
+            id
+        );
 
-    connection.release();
-    return value != null;
+        connection.release();
+        return value != null;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -30,15 +35,20 @@ exports.get = async function(queryVal, queryField="categoryId", fields=["categor
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
-        helper.genSelect(fields, nameMap) +
-        "FROM Category \
-        WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
-        queryVal
-    );
+    try {
+        let [[value], _] = await connection.query(
+            helper.genSelect(fields, nameMap) +
+            "FROM Category \
+            WHERE " + helper.mapName(queryField, nameMap) + " = ?", 
+            queryVal
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -49,11 +59,16 @@ exports.getAll = async function(fields=["categoryId", "name"])
 {
     const connection = await db.getConnection();
 
-    let [values, _] = await connection.query(
-        helper.genSelect(fields, nameMap) + 
-        "FROM Category"
-    );
+    try {
+        let [values, _] = await connection.query(
+            helper.genSelect(fields, nameMap) + 
+            "FROM Category"
+        );
 
-    connection.release();
-    return values;
+        connection.release();
+        return values;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }

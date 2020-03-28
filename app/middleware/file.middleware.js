@@ -3,7 +3,7 @@ const error = require("./error.middleware");
 
 const photoPath = "storage/photos/";
 
-exports.saveBody = async function(req, filename)
+exports.saveBodyPhoto = async function(req, filename)
 {
     let content = req.get("Content-Type");
 
@@ -14,7 +14,9 @@ exports.saveBody = async function(req, filename)
 
     const path = photoPath + filename;
     
-    req.pipe(fs.createWriteStream(path));
+    console.log(path);
+
+    await req.pipe(fs.createWriteStream(path, { autoClose: true }));
 
     return filename;
 }

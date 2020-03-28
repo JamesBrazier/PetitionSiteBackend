@@ -22,15 +22,20 @@ exports.exists = async function(id)
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
-        "SELECT petition_id \
-        FROM Petition \
-        WHERE petition_id = ?", 
-        id
-    );
+    try {
+        let [[value], _] = await connection.query(
+            "SELECT petition_id \
+            FROM Petition \
+            WHERE petition_id = ?", 
+            id
+        );
 
-    connection.release();
-    return value != null;
+        connection.release();
+        return value != null;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -43,22 +48,27 @@ exports.get = async function(queryVal, queryField="petitionId",
 {
     const connection = await db.getConnection();
 
-    let [[value], _] = await connection.query(
-        helper.genSelect(fields, nameMap) +
-        "FROM Petition \
-            LEFT JOIN Signature \
-            ON Petition.petition_id = Signature.petition_id \
-            JOIN Category \
-            ON Petition.category_id = Category.category_id \
-            JOIN User \
-            ON Petition.author_id = User.user_id \
-        WHERE " + helper.mapName(queryField, nameMap) + " = ? \
-        GROUP BY Petition.petition_id", 
-        queryVal
-    );
+    try {
+        let [[value], _] = await connection.query(
+            helper.genSelect(fields, nameMap) +
+            "FROM Petition \
+                LEFT JOIN Signature \
+                ON Petition.petition_id = Signature.petition_id \
+                JOIN Category \
+                ON Petition.category_id = Category.category_id \
+                JOIN User \
+                ON Petition.author_id = User.user_id \
+            WHERE " + helper.mapName(queryField, nameMap) + " = ? \
+            GROUP BY Petition.petition_id", 
+            queryVal
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -69,21 +79,26 @@ exports.getAll = async function(fields=["petitionId", "title", "category", "auth
 {
     const connection = await db.getConnection();
 
-    let [values, _] = await connection.query(
-        helper.genSelect(fields, nameMap) +
-        "FROM Petition \
-            LEFT JOIN Signature \
-            ON Petition.petition_id = Signature.petition_id \
-            JOIN Category \
-            ON Petition.category_id = Category.category_id \
-            JOIN User \
-            ON Petition.author_id = User.user_id \
-        GROUP BY Petition.petition_id \
-        ORDER BY COUNT(signatory_id) DESC"
-    );
+    try {
+        let [values, _] = await connection.query(
+            helper.genSelect(fields, nameMap) +
+            "FROM Petition \
+                LEFT JOIN Signature \
+                ON Petition.petition_id = Signature.petition_id \
+                JOIN Category \
+                ON Petition.category_id = Category.category_id \
+                JOIN User \
+                ON Petition.author_id = User.user_id \
+            GROUP BY Petition.petition_id \
+            ORDER BY COUNT(signatory_id) DESC"
+        );
 
-    connection.release();
-    return values;
+        connection.release();
+        return values;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -169,10 +184,15 @@ exports.search = async function(params={},
 
     const connection = await db.getConnection();
 
-    let [values, _] = await connection.query(queryStr, queryArgs);
+    try {
+        let [values, _] = await connection.query(queryStr, queryArgs);
 
-    connection.release();
-    return values;
+        connection.release();
+        return values;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -191,14 +211,19 @@ exports.add = async function(values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        "INSERT INTO Petition \
-        SET ?",
-        helper.mapObject(values, nameMap)
-    );
+    try {
+        let [value, _] = await connection.query(
+            "INSERT INTO Petition \
+            SET ?",
+            helper.mapObject(values, nameMap)
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -210,14 +235,19 @@ exports.delete = async function(id)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        "DELETE FROM Petition \
-        WHERE petition_id = ?", 
-        id
-    );
+    try {
+        let [value, _] = await connection.query(
+            "DELETE FROM Petition \
+            WHERE petition_id = ?", 
+            id
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }
 
 /**
@@ -236,15 +266,20 @@ exports.update = async function(id, values)
 {
     const connection = await db.getConnection();
 
-    let [value, _] = await connection.query(
-        "UPDATE Petition SET ? \
-        WHERE petition_id = ?",
-        [
-            helper.mapObject(values, nameMap), 
-            id
-        ]
-    );
+    try {
+        let [value, _] = await connection.query(
+            "UPDATE Petition SET ? \
+            WHERE petition_id = ?",
+            [
+                helper.mapObject(values, nameMap), 
+                id
+            ]
+        );
 
-    connection.release();
-    return value;
+        connection.release();
+        return value;
+    } catch (err) {
+        connection.release();
+        throw err;
+    }
 }

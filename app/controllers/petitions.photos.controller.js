@@ -41,7 +41,7 @@ exports.set = async function(req, res)
             throw new error.Forbidden("client tried to edit nsomeone else's petition");
         }
 
-        const filename = await file.saveBody(req, "petition_" + id);
+        const filename = await file.saveBodyPhoto(req, "petition_" + id);
         let status;
         if (petition.photoFilename != null) {
             await file.deletePhoto(petition.photoFilename); //delete the old file
