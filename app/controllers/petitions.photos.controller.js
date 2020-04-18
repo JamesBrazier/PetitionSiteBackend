@@ -40,6 +40,7 @@ exports.set = async function(req, res)
     try {
         const id = parse.number(req.params.id);
         const token = parse.token(req.get("X-Authorization")); //ensure the token is valid
+        const fileType = parse.MIME(req.get("Content-Type")); //check if image type is supported
         console.log("Petition.photo request update", id, "with", token);
 
         const user = await users.getAuth(token, ["userId"]); //get the user with the token
@@ -52,7 +53,9 @@ exports.set = async function(req, res)
             throw new error.Forbidden("client tried to edit nsomeone else's petition");
         }
 
-        const filename = await file.saveBodyPhoto(req, "petition_" + id); //save the body of the request
+        const filename = "petition_" + id + fileType;
+        await file.savePhoto(req.body, filename); //save the body of the request
+
         let status;
         if (petition.photoFilename != null) {
             if (petition.photoFilename != filename) { //delete the old file if it wasn't overidden

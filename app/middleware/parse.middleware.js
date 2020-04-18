@@ -37,3 +37,19 @@ exports.body = function(body)
 
     return body;
 }
+
+/**
+ * @description checks if the given image MIME type is supported, throwing an error if not
+ * @param {String} content the HTML content header string
+ * @returns the file extention if supported
+ */
+exports.MIME = function(content) 
+{
+    console.log(content);
+
+    if (!["image/png", "image/jpeg", "image/gif"].includes(content)) {
+        throw new error.BadRequest("given content type is not supported");
+    }
+
+    return "." + content.slice(6);
+}

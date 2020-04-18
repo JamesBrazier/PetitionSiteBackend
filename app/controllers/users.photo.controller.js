@@ -39,6 +39,7 @@ exports.set = async function(req, res)
     try {
         const id = parse.number(req.params.id);
         const token = parse.token(req.get("X-Authorization")); //ensure the token is valid
+        const fileType = parse.MIME(req.get("Content-Type")); //check if image type is supported
         console.log("Users.photos request update", id, "with", token);
 
         if (!await users.exists(id)) {
@@ -50,7 +51,9 @@ exports.set = async function(req, res)
             throw new error.Forbidden("client tried to edit non-self user");
         }
 
-        const filename = await file.saveBodyPhoto(req, "user_" + user.userId);
+        const filename = "user_" + user.userId + fileType;
+        await file.savePhoto(req.body, filename); //save the new file
+
         let status;
         if (user.photoFilename != null) {
             if (user.photoFilename != filename) { //delete the old file if its not overidden
