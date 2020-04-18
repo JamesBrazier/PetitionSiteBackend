@@ -1,7 +1,7 @@
 const users = require("../models/users.model");
 const error = require("../middleware/error.middleware");
 const parse = require("../middleware/parse.middleware");
-const hash = require("crypto-js");
+const hash = require("../middleware/hash.middleware");
 
 /**
  * @description adds a new user to the database
@@ -25,9 +25,9 @@ exports.add = async function(req, res)
         }
         if (body.password == null || body.password == 0) { //ensure the password is valid
             throw new error.BadRequest("Password is empty");
-        } //else {
-        //    body.password = hash.SHA256(body.password);
-        //}
+        } else {
+            body.password = hash.hash(body.password);
+        }
 
         const info = await users.add(body);
 
@@ -50,11 +50,11 @@ exports.login = async function(req, res)
         console.log("User request login", body);
 
         const user = await users.get(body.email, "email", ["userId", "password"]);
-        if (user == null || body.password !== user.password) { //if the user doesnt exsist or the password is wrong/invalid
+        if (user == null || !hash.equals(body.password, user.password)) { //if the user doesnt exsist or the password is wrong/invalid
             throw new error.BadRequest("Password or email is incorrect");
         }
 
-        const token = String(hash.MD5(String(Math.random()))); //generate a random hex token (hash only works for strings)
+        const token = hash.genToken(); //generate a random hex token
         await users.update(user.userId, { token: token });
 
         user.token = token;
@@ -146,7 +146,7 @@ exports.update = async function(req, res)
             if (body.password == 0) {
                 throw new error.BadRequest("New password is not valid");
             }
-            if (body.currentPassword == null || body.currentPassword !== user.password) {
+            if (body.currentPassword == null || !hash.equals(body.currentPassword, user.password)) {
                 throw new error.BadRequest("Current password is incorrect");
             }
             delete body.currentPassword; //not a valid field for the update
